@@ -14,11 +14,15 @@ class LudoBoardWidget extends StatefulWidget {
 }
 
 class _LudoBoardWidgetState extends State<LudoBoardWidget>
-    with SingleTickerProviderStateMixin {
+  with TickerProviderStateMixin {
   late AnimationController _ctrl;
+  late AnimationController _captureCtrl;
   GameProvider? _provider;
   LastMoveInfo? _activeMove;
+  CaptureEffectInfo? _activeCapture;
+  CaptureEffectInfo? _queuedCapture;
   int _lastAnimatedVersion = -1;
+  int _lastCaptureVersion = -1;
 
   @override
   void initState() {
@@ -31,6 +35,21 @@ class _LudoBoardWidgetState extends State<LudoBoardWidget>
       ..addStatusListener((status) {
         if (status == AnimationStatus.completed) {
           setState(() => _activeMove = null);
+          if (_queuedCapture != null) {
+            _startCaptureEffect(_queuedCapture!);
+            _queuedCapture = null;
+          }
+        }
+      });
+
+    _captureCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    )
+      ..addListener(() => setState(() {}))
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          setState(() => _activeCapture = null);
         }
       });
   }
@@ -50,6 +69,7 @@ class _LudoBoardWidgetState extends State<LudoBoardWidget>
   void dispose() {
     _provider?.removeListener(_onGameChange);
     _ctrl.dispose();
+    _captureCtrl.dispose();
     super.dispose();
   }
 
@@ -65,6 +85,21 @@ class _LudoBoardWidgetState extends State<LudoBoardWidget>
       setState(() => _activeMove = move);
       _ctrl.forward(from: 0.0);
     }
+
+    if (p.captureVersion > _lastCaptureVersion && p.lastCaptureEffect != null) {
+      _lastCaptureVersion = p.captureVersion;
+      final capture = p.lastCaptureEffect!;
+      if (_ctrl.isAnimating || _activeMove != null) {
+        _queuedCapture = capture;
+      } else {
+        _startCaptureEffect(capture);
+      }
+    }
+  }
+
+  void _startCaptureEffect(CaptureEffectInfo effect) {
+    setState(() => _activeCapture = effect);
+    _captureCtrl.forward(from: 0.0);
   }
 
   @override
@@ -84,6 +119,8 @@ class _LudoBoardWidgetState extends State<LudoBoardWidget>
             highlightedPawnIndices: state?.movablePawnIndices ?? [],
             activeMove: _ctrl.isAnimating ? _activeMove : null,
             animProgress: _ctrl.value,
+            activeCapture: _captureCtrl.isAnimating ? _activeCapture : null,
+            captureProgress: _captureCtrl.value,
           ),
         ),
       ),

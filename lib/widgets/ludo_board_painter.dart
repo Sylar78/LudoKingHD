@@ -13,12 +13,16 @@ class LudoBoardPainter extends CustomPainter {
   final List<int> highlightedPawnIndices;
   final LastMoveInfo? activeMove;
   final double animProgress;
+  final CaptureEffectInfo? activeCapture;
+  final double captureProgress;
 
   LudoBoardPainter({
     this.state,
     required this.highlightedPawnIndices,
     this.activeMove,
     this.animProgress = 0.0,
+    this.activeCapture,
+    this.captureProgress = 0.0,
   });
 
   @override
@@ -31,6 +35,9 @@ class LudoBoardPainter extends CustomPainter {
     _drawCentre(canvas, size, cellSize);
     _drawSafeZoneStars(canvas, cellSize);
     if (state != null) {
+      if (activeCapture != null) {
+        _drawCaptureHalo(canvas, cellSize);
+      }
       _drawPawns(canvas, cellSize);
     }
   }
@@ -204,6 +211,7 @@ class LudoBoardPainter extends CustomPainter {
     for (int pi = 0; pi < s.players.length; pi++) {
       final player = s.players[pi];
       for (int i = 0; i < player.pawns.length; i++) {
+        if (_isCaptureAnimatedPawn(pi, i)) continue;
         // Skip the pawn currently being animated (drawn separately below)
         if (activeMove != null &&
             pi == activeMove!.playerIdx &&
@@ -213,6 +221,65 @@ class LudoBoardPainter extends CustomPainter {
     }
     // Animated pawn drawn last so it renders on top
     if (activeMove != null) _drawAnimatedPawn(canvas, cellSize, s);
+    if (activeCapture != null) {
+      _drawCapturedPawnsSlide(canvas, cellSize);
+    }
+  }
+
+  bool _isCaptureAnimatedPawn(int playerIdx, int pawnIdx) {
+    final capture = activeCapture;
+    if (capture == null) return false;
+    return capture.capturedPawns
+        .any((p) => p.playerIdx == playerIdx && p.pawnIdx == pawnIdx);
+  }
+
+  void _drawCaptureHalo(Canvas canvas, double cellSize) {
+    final capture = activeCapture;
+    if (capture == null) return;
+    final pos = capture.captureCellPosition;
+    if (pos < 0 || pos >= BoardLayout.outerPath.length) return;
+
+    final cell = BoardLayout.outerPath[pos];
+    final left = cell.$2 * cellSize;
+    final top = cell.$1 * cellSize;
+    final rect = Rect.fromLTWH(left + 1, top + 1, cellSize - 2, cellSize - 2);
+    final t = captureProgress.clamp(0.0, 1.0);
+    final pulse = 0.7 + 0.3 * math.sin(t * math.pi * 5);
+
+    final glowPaint = Paint()
+      ..color = Colors.red.withOpacity((0.40 * (1 - t) + 0.22) * pulse)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 8
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 9);
+
+    final borderPaint = Paint()
+      ..color = Colors.red.withOpacity(0.95)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.8;
+
+    final fillPaint = Paint()
+      ..color = Colors.red.withOpacity(0.10 * (1 - t));
+
+    final rr = RRect.fromRectAndRadius(rect, Radius.circular(cellSize * 0.12));
+    canvas.drawRRect(rr, fillPaint);
+    canvas.drawRRect(rr, glowPaint);
+    canvas.drawRRect(rr, borderPaint);
+  }
+
+  void _drawCapturedPawnsSlide(Canvas canvas, double cellSize) {
+    final capture = activeCapture;
+    if (capture == null) return;
+    final t = Curves.easeInOutCubic.transform(captureProgress.clamp(0.0, 1.0));
+
+    for (final p in capture.capturedPawns) {
+      final from = _resolveOffset(p.fromPosition, p.color, p.pawnIdx, cellSize);
+      final to = BoardLayout.basePositionOffset(p.color, p.pawnIdx, cellSize);
+
+      final cx = from.$1 + (to.$1 - from.$1) * t;
+      final cy = from.$2 + (to.$2 - from.$2) * t;
+      final bottomY = cy + cellSize * 0.32;
+      _drawChessPawn(canvas, cx, bottomY, cellSize, p.color.color, false);
+    }
   }
 
   // Interpolated hop animation – advances one cell at a time

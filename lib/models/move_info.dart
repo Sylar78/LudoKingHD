@@ -18,3 +18,31 @@ class LastMoveInfo {
     required this.path,
   });
 }
+
+/// One pawn sent back to base after a capture.
+class CapturedPawnInfo {
+  final int playerIdx;
+  final int pawnIdx;
+  final int fromPosition; // usually on outer path
+  final int toPosition; // base = -1
+  final PlayerColor color;
+
+  const CapturedPawnInfo({
+    required this.playerIdx,
+    required this.pawnIdx,
+    required this.fromPosition,
+    required this.toPosition,
+    required this.color,
+  });
+}
+
+/// Visual effect payload for a capture: red halo on the capture cell + slides.
+class CaptureEffectInfo {
+  final int captureCellPosition;
+  final List<CapturedPawnInfo> capturedPawns;
+
+  const CaptureEffectInfo({
+    required this.captureCellPosition,
+    required this.capturedPawns,
+  });
+}

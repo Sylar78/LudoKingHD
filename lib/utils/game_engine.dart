@@ -120,20 +120,38 @@ class GameEngine {
   }
   // ── Capture logic ───────────────────────────────────────────────────────
 
-  /// If the [pawn] lands on an outer-path square occupied by at least one
-  /// opponent pawn, those pawns are sent back to base.
-  /// Returns true if a capture occurred.
-  static bool resolveCaptures(Pawn pawn, GameState state) {
-    if (!pawn.isOnOuterPath) return false;
-    if (safeZones.contains(pawn.position)) return false;
+  /// If the [pawn] lands on an outer-path square occupied by opponent pawns,
+  /// those pawns are sent back to base.
+  ///
+  /// Returns a record list describing captured pawns for UI animation.
+  static List<({
+    int playerIdx,
+    int pawnIdx,
+    PlayerColor color,
+    int fromPosition
+  })> resolveCaptures(Pawn pawn, GameState state) {
+    if (!pawn.isOnOuterPath) return [];
+    if (safeZones.contains(pawn.position)) return [];
 
-    bool captured = false;
-    for (final player in state.players) {
+    final captured = <({
+      int playerIdx,
+      int pawnIdx,
+      PlayerColor color,
+      int fromPosition
+    })>[];
+
+    for (int pi = 0; pi < state.players.length; pi++) {
+      final player = state.players[pi];
       if (player.color == pawn.color) continue;
       for (final op in player.pawns) {
         if (op.position == pawn.position && op.isOnOuterPath) {
+          captured.add((
+            playerIdx: pi,
+            pawnIdx: op.index,
+            color: op.color,
+            fromPosition: op.position,
+          ));
           op.position = -1; // send back to base
-          captured = true;
         }
       }
     }

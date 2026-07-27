@@ -21,6 +21,12 @@ class GameProvider extends ChangeNotifier {
   LastMoveInfo? _lastMove;
   LastMoveInfo? get lastMove => _lastMove;
 
+  int _captureVersion = 0;
+  int get captureVersion => _captureVersion;
+
+  CaptureEffectInfo? _lastCaptureEffect;
+  CaptureEffectInfo? get lastCaptureEffect => _lastCaptureEffect;
+
   // ── Start ────────────────────────────────────────────────────────────────
 
   void startGame(GameMode mode, List<PlayerColor> colors) {
@@ -57,6 +63,9 @@ class GameProvider extends ChangeNotifier {
             "Trois 6 consécutifs ! Tour annulé pour ${s.currentPlayer.color.name}.";
         _endTurn();
         notifyListeners();
+        if (s.currentPlayer.type == PlayerType.computer) {
+          await _triggerAiTurn();
+        }
         return;
       }
     } else {
@@ -75,6 +84,18 @@ class GameProvider extends ChangeNotifier {
       if (s.currentPlayer.type == PlayerType.computer) {
         await _triggerAiTurn();
       }
+      return;
+    }
+
+    // If only one pawn can move, auto-play it (no selection needed).
+    if (movable.length == 1) {
+      s.movablePawnIndices = movable;
+      s.phase = GamePhase.choosingPawn;
+      s.message =
+          "${s.currentPlayer.color.name} : coup unique, déplacement automatique.";
+      notifyListeners();
+      await Future.delayed(const Duration(milliseconds: 220));
+      movePawn(movable.first);
       return;
     }
 
@@ -118,7 +139,25 @@ class GameProvider extends ChangeNotifier {
 
     pawn.position = newPos;
 
-    final captured = GameEngine.resolveCaptures(pawn, s);
+    final capturedPawns = GameEngine.resolveCaptures(pawn, s);
+    final captured = capturedPawns.isNotEmpty;
+    if (captured) {
+      _captureVersion++;
+      _lastCaptureEffect = CaptureEffectInfo(
+        captureCellPosition: pawn.position,
+        capturedPawns: capturedPawns
+            .map(
+              (c) => CapturedPawnInfo(
+                playerIdx: c.playerIdx,
+                pawnIdx: c.pawnIdx,
+                fromPosition: c.fromPosition,
+                toPosition: -1,
+                color: c.color,
+              ),
+            )
+            .toList(growable: false),
+      );
+    }
     final reachedHome = pawn.isHome;
 
     // Check if player finished
