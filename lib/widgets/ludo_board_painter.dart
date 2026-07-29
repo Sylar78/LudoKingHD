@@ -154,56 +154,61 @@ class LudoBoardPainter extends CustomPainter {
       final r = entry.value;
       final c = colors[entry.key]!;
 
-      // Background – rich gradient per base
+      // Outer player zone: flat saturated color (reference style).
       final bgRect = Rect.fromLTWH(
         r.left * cellSize,
         r.top * cellSize,
         r.width * cellSize,
         r.height * cellSize,
       );
-      final bgPaint = Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color.lerp(c, Colors.white, 0.08)!,
-            Color.lerp(c, Colors.black, 0.26)!,
-          ],
-        ).createShader(bgRect);
+      final bgPaint = Paint()..color = c;
       canvas.drawRRect(
-          RRect.fromRectAndRadius(
-              bgRect,
-              const Radius.circular(10)),
-          bgPaint);
+        RRect.fromRectAndRadius(bgRect, const Radius.circular(8)),
+        bgPaint,
+      );
 
-      // Border
+      // Outer border of the player zone.
       final borderPaint = Paint()
-        ..color = c
-        ..strokeWidth = 2.5
+        ..color = Color.lerp(c, Colors.black, 0.18)!
+        ..strokeWidth = 1.8
         ..style = PaintingStyle.stroke;
       final rr = RRect.fromRectAndRadius(
-          Rect.fromLTWH(r.left * cellSize + 2, r.top * cellSize + 2,
-              r.width * cellSize - 4, r.height * cellSize - 4),
-          const Radius.circular(8));
+        Rect.fromLTWH(
+          r.left * cellSize + 1,
+          r.top * cellSize + 1,
+          r.width * cellSize - 2,
+          r.height * cellSize - 2,
+        ),
+        const Radius.circular(8),
+      );
       canvas.drawRRect(rr, borderPaint);
 
-      _drawSoftStripes(canvas, rr.outerRect, c.withOpacity(0.20), cellSize * 0.52);
+      // Inner white square with player-color contour (as in reference).
+      final innerRect = Rect.fromLTWH(
+        (r.left + 1) * cellSize,
+        (r.top + 1) * cellSize,
+        4 * cellSize,
+        4 * cellSize,
+      );
+      canvas.drawRect(innerRect, Paint()..color = Colors.white);
+      canvas.drawRect(
+        innerRect,
+        Paint()
+          ..color = Color.lerp(c, Colors.black, 0.16)!
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.6,
+      );
 
-      // Inner circle
+      // Optional subtle tint to keep volume while preserving white-square look.
       final innerCirclePaint = Paint()
-        ..shader = RadialGradient(
-          colors: [
-            c.withOpacity(0.62),
-            c.withOpacity(0.38),
-          ],
-        ).createShader(Rect.fromCircle(
-          center: Offset((r.left + r.width / 2) * cellSize, (r.top + r.height / 2) * cellSize),
-          radius: r.width * cellSize * 0.42,
-        ));
+        ..color = c.withOpacity(0.10);
       final centerX = (r.left + r.width / 2) * cellSize;
       final centerY = (r.top + r.height / 2) * cellSize;
       canvas.drawCircle(
-          Offset(centerX, centerY), r.width * cellSize * 0.40, innerCirclePaint);
+        Offset(centerX, centerY),
+        r.width * cellSize * 0.36,
+        innerCirclePaint,
+      );
     }
   }
 
@@ -217,22 +222,16 @@ class LudoBoardPainter extends CustomPainter {
 
     for (final entry in BoardLayout.homeColumns.entries) {
       final color = colors[entry.key]!;
-      final paint = Paint()..color = color.withOpacity(0.52);
+      final paint = Paint()..color = color.withOpacity(0.92);
       for (int i = 0; i < entry.value.length - 1; i++) {
         final cell = entry.value[i];
         final rect = Rect.fromLTWH(
             cell.$2 * cellSize + 1, cell.$1 * cellSize + 1, cellSize - 2, cellSize - 2);
         canvas.drawRect(rect, paint);
-        _drawSoftStripes(
-          canvas,
-          rect,
-          Colors.white.withOpacity(0.08),
-          cellSize * 0.35,
-        );
         canvas.drawRect(
           rect,
           Paint()
-            ..color = Colors.white.withOpacity(0.08)
+            ..color = Colors.white.withOpacity(0.24)
             ..style = PaintingStyle.stroke
             ..strokeWidth = 0.7,
         );
@@ -347,6 +346,13 @@ class LudoBoardPainter extends CustomPainter {
   }
 
   void _drawSafeZoneStars(Canvas canvas, double cellSize) {
+    const startCellColors = {
+      0: Color(0xFFE53935),
+      13: Color(0xFF1E88E5),
+      26: Color(0xFF43A047),
+      39: Color(0xFFFDD835),
+    };
+
     for (final idx in safeZones) {
       if (idx < 0 || idx >= BoardLayout.outerPath.length) continue;
       final cell = BoardLayout.outerPath[idx];
@@ -354,6 +360,20 @@ class LudoBoardPainter extends CustomPainter {
       final top  = cell.$1 * cellSize;
       final cx   = left + cellSize / 2;
       final cy   = top  + cellSize / 2;
+
+      final startColor = startCellColors[idx];
+      if (startColor != null) {
+        final cellRect = Rect.fromLTWH(left + 0.5, top + 0.5, cellSize - 1, cellSize - 1);
+        canvas.drawRect(cellRect, Paint()..color = startColor.withOpacity(0.92));
+        canvas.drawRect(
+          cellRect,
+          Paint()
+            ..color = Colors.white.withOpacity(0.26)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 0.7,
+        );
+        continue;
+      }
 
       // Gold background
       canvas.drawRect(
