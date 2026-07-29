@@ -87,18 +87,6 @@ class GameProvider extends ChangeNotifier {
       return;
     }
 
-    // If only one pawn can move, auto-play it (no selection needed).
-    if (movable.length == 1) {
-      s.movablePawnIndices = movable;
-      s.phase = GamePhase.choosingPawn;
-      s.message =
-          "${s.currentPlayer.color.name} : coup unique, déplacement automatique.";
-      notifyListeners();
-      await Future.delayed(const Duration(milliseconds: 220));
-      movePawn(movable.first);
-      return;
-    }
-
     s.movablePawnIndices = movable;
     s.phase = GamePhase.choosingPawn;
     s.message =
@@ -165,21 +153,9 @@ class GameProvider extends ChangeNotifier {
       player.hasFinished = true;
       s.finishedPlayerIndices.add(s.currentPlayerIndex);
       player.finishRank = s.finishedPlayerIndices.length;
-      s.message =
-          "🏆 ${player.color.name} a gagné (place ${player.finishRank}) !";
-    }
-
-    // Check game over (all but one finished)
-    final remaining =
-        s.players.where((p) => !p.hasFinished).toList();
-    if (remaining.length <= 1) {
-      if (remaining.length == 1 && !remaining.first.hasFinished) {
-        remaining.first.hasFinished = true;
-        remaining.first.finishRank = s.players.length;
-      }
+      s.message = "🏆 ${player.color.name} a gagné !";
       s.phase = GamePhase.gameOver;
-      s.winnerIndex = s.finishedPlayerIndices.first;
-      s.message = "Partie terminée !";
+      s.winnerIndex = s.currentPlayerIndex;
       notifyListeners();
       return;
     }

@@ -328,10 +328,10 @@ class LudoBoardPainter extends CustomPainter {
 
     // Draw a coloured triangle for each quadrant
     final colours = [
-      (const Color(0xFFE53935), [Offset(cx, cy), Offset(cx - r, cy - r), Offset(cx + r, cy - r)]), // top=red
-      (const Color(0xFF1E88E5), [Offset(cx, cy), Offset(cx + r, cy - r), Offset(cx + r, cy + r)]), // right=blue
-      (const Color(0xFF43A047), [Offset(cx, cy), Offset(cx + r, cy + r), Offset(cx - r, cy + r)]), // bottom=green
-      (const Color(0xFFFDD835), [Offset(cx, cy), Offset(cx - r, cy + r), Offset(cx - r, cy - r)]), // left=yellow
+      (const Color(0xFF1E88E5), [Offset(cx, cy), Offset(cx - r, cy - r), Offset(cx + r, cy - r)]), // top=blue
+      (const Color(0xFF43A047), [Offset(cx, cy), Offset(cx + r, cy - r), Offset(cx + r, cy + r)]), // right=green
+      (const Color(0xFFFDD835), [Offset(cx, cy), Offset(cx + r, cy + r), Offset(cx - r, cy + r)]), // bottom=yellow
+      (const Color(0xFFE53935), [Offset(cx, cy), Offset(cx - r, cy + r), Offset(cx - r, cy - r)]), // left=red
     ];
 
     for (final tri in colours) {
