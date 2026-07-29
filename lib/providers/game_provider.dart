@@ -87,6 +87,23 @@ class GameProvider extends ChangeNotifier {
       return;
     }
 
+    // Human QoL: auto-play only when there is exactly one pawn in play
+    // (others still in base) and exactly one legal move.
+    final pawnsOutOfBase =
+        s.currentPlayer.pawns.where((p) => !p.isInBase).length;
+    if (s.currentPlayer.type == PlayerType.human &&
+        movable.length == 1 &&
+        pawnsOutOfBase <= 1) {
+      s.movablePawnIndices = movable;
+      s.phase = GamePhase.choosingPawn;
+      s.message =
+          "${s.currentPlayer.color.name} : coup unique, déplacement automatique.";
+      notifyListeners();
+      await Future.delayed(const Duration(milliseconds: 180));
+      movePawn(movable.first);
+      return;
+    }
+
     s.movablePawnIndices = movable;
     s.phase = GamePhase.choosingPawn;
     s.message =
