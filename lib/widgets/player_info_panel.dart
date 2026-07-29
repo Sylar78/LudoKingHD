@@ -16,14 +16,25 @@ class PlayerInfoPanel extends StatelessWidget {
       duration: const Duration(milliseconds: 300),
       width: 120,
       decoration: BoxDecoration(
-        color: const Color(0xFF0E1A40),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1D2B5F), Color(0xFF101A40)],
+        ),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isActive ? c.color : c.color.withOpacity(0.35),
           width: isActive ? 2.5 : 1.5,
         ),
         boxShadow: isActive
-            ? [BoxShadow(color: c.color.withOpacity(0.45), blurRadius: 10, spreadRadius: 1)]
+            ? [
+                BoxShadow(
+                  color: c.color.withOpacity(0.45),
+                  blurRadius: 14,
+                  spreadRadius: 1.2,
+                  offset: const Offset(0, 5),
+                ),
+              ]
             : [],
       ),
       child: Padding(
@@ -52,7 +63,8 @@ class PlayerInfoPanel extends StatelessWidget {
                           spreadRadius: 0.5),
                     ],
                   ),
-                  child: Icon(Icons.person, size: 28, color: c.darkColor),
+                  child: Icon(Icons.location_on_rounded,
+                      size: 30, color: c.darkColor),
                 ),
                 if (isActive)
                   Container(

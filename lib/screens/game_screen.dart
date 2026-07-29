@@ -21,7 +21,7 @@ class GameScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1035),
+      backgroundColor: const Color(0xFF130B2D),
       appBar: AppBar(
         backgroundColor: const Color(0xFF2D1B69),
         foregroundColor: Colors.white,
@@ -35,9 +35,18 @@ class GameScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF2A1A58), Color(0xFF1B103E), Color(0xFF12092F)],
+            stops: [0.0, 0.56, 1.0],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
             // ── Joueurs haut : Rouge (0) + Bleu (1) ─────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -54,12 +63,37 @@ class GameScreen extends StatelessWidget {
             ),
 
             // Board
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: const LudoBoardWidget(),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(18),
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xAA32236F), Color(0xAA1A1244)],
+                      ),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.16),
+                        width: 1.2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.36),
+                          blurRadius: 18,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(6),
+                    child: const ClipRRect(
+                      borderRadius: BorderRadius.all(Radius.circular(14)),
+                      child: LudoBoardWidget(),
+                    ),
+                  ),
+                ),
               ),
-            ),
 
             // ── Joueurs bas : Jaune (3) + Vert (2) ──────────────────────
             if (state.players.length > 2)
@@ -143,8 +177,9 @@ class GameScreen extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 8),
-          ],
+              const SizedBox(height: 8),
+            ],
+          ),
         ),
       ),
     );

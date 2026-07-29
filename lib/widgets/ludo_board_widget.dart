@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 import 'package:provider/provider.dart';
 import '../models/game_state.dart';
 import '../models/move_info.dart';
@@ -132,8 +133,11 @@ class _LudoBoardWidgetState extends State<LudoBoardWidget>
     if (state.phase != GamePhase.choosingPawn) return;
     final provider = context.read<GameProvider>();
     final boxSize = (context.findRenderObject() as RenderBox).size;
-    final cellSize = boxSize.width / 15;
-    final tapPos = details.localPosition;
+    final boardSide = math.min(boxSize.width, boxSize.height);
+    final offsetX = (boxSize.width - boardSide) / 2;
+    final offsetY = (boxSize.height - boardSide) / 2;
+    final cellSize = boardSide / 15;
+    final tapPos = details.localPosition - Offset(offsetX, offsetY);
 
     final player = state.currentPlayer;
 

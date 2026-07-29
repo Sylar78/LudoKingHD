@@ -27,12 +27,21 @@ class LudoBoardPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final cellSize = size.width / 15;
+    final boardSide = math.min(size.width, size.height);
+    final dx = (size.width - boardSide) / 2;
+    final dy = (size.height - boardSide) / 2;
+    final boardSize = Size(boardSide, boardSide);
+    final cellSize = boardSide / 15;
 
-    _drawGrid(canvas, size, cellSize);
+    canvas.save();
+    canvas.translate(dx, dy);
+
+    _drawBoardBackdrop(canvas, boardSize);
+    _drawGrid(canvas, boardSize, cellSize);
     _drawBases(canvas, cellSize);
     _drawHomeColumns(canvas, cellSize);
-    _drawCentre(canvas, size, cellSize);
+    _drawEntryArrows(canvas, cellSize);
+    _drawCentre(canvas, boardSize, cellSize);
     _drawSafeZoneStars(canvas, cellSize);
     if (state != null) {
       if (activeCapture != null) {
@@ -40,6 +49,33 @@ class LudoBoardPainter extends CustomPainter {
       }
       _drawPawns(canvas, cellSize);
     }
+
+    canvas.restore();
+  }
+
+  void _drawBoardBackdrop(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final base = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFF2A1A57), Color(0xFF1A1038), Color(0xFF10092A)],
+        stops: [0.0, 0.62, 1.0],
+      ).createShader(rect);
+    canvas.drawRect(rect, base);
+
+    final vignette = Paint()
+      ..shader = RadialGradient(
+        center: const Alignment(0, -0.1),
+        radius: 1.06,
+        colors: [
+          Colors.transparent,
+          Colors.black.withOpacity(0.18),
+          Colors.black.withOpacity(0.36),
+        ],
+        stops: const [0.5, 0.82, 1.0],
+      ).createShader(rect);
+    canvas.drawRect(rect, vignette);
   }
 
   void _drawGrid(Canvas canvas, Size size, double cellSize) {
@@ -55,9 +91,27 @@ class LudoBoardPainter extends CustomPainter {
     canvas.clipPath(clip);
 
     final gridPaint = Paint()
-      ..color = Colors.grey.shade400.withOpacity(0.45)
-      ..strokeWidth = 0.5
+      ..color = const Color(0xFFD6DDFF).withOpacity(0.18)
+      ..strokeWidth = 0.95
       ..style = PaintingStyle.stroke;
+
+    final laneHighlight = Paint()
+      ..color = Colors.white.withOpacity(0.055)
+      ..style = PaintingStyle.fill;
+    canvas.drawRect(Rect.fromLTWH(6 * cellSize, 0, 3 * cellSize, 15 * cellSize), laneHighlight);
+    canvas.drawRect(Rect.fromLTWH(0, 6 * cellSize, 15 * cellSize, 3 * cellSize), laneHighlight);
+
+    // Subtle diagonal texture for white path cells.
+    final texturePaint = Paint()
+      ..color = Colors.white.withOpacity(0.045)
+      ..strokeWidth = 1.0;
+    for (double x = -size.height; x < size.width; x += cellSize * 0.44) {
+      canvas.drawLine(
+        Offset(x, 0),
+        Offset(x + size.height, size.height),
+        texturePaint,
+      );
+    }
 
     for (int i = 0; i <= 15; i++) {
       canvas.drawLine(
@@ -86,12 +140,25 @@ class LudoBoardPainter extends CustomPainter {
       final r = entry.value;
       final c = colors[entry.key]!;
 
-      // Background – solid dark-tinted colour
-      final bgPaint = Paint()..color = Color.lerp(c, Colors.black, 0.30)!;
+      // Background – rich gradient per base
+      final bgRect = Rect.fromLTWH(
+        r.left * cellSize,
+        r.top * cellSize,
+        r.width * cellSize,
+        r.height * cellSize,
+      );
+      final bgPaint = Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.lerp(c, Colors.white, 0.08)!,
+            Color.lerp(c, Colors.black, 0.26)!,
+          ],
+        ).createShader(bgRect);
       canvas.drawRRect(
           RRect.fromRectAndRadius(
-              Rect.fromLTWH(r.left * cellSize, r.top * cellSize,
-                  r.width * cellSize, r.height * cellSize),
+              bgRect,
               const Radius.circular(10)),
           bgPaint);
 
@@ -106,8 +173,19 @@ class LudoBoardPainter extends CustomPainter {
           const Radius.circular(8));
       canvas.drawRRect(rr, borderPaint);
 
+      _drawSoftStripes(canvas, rr.outerRect, c.withOpacity(0.20), cellSize * 0.52);
+
       // Inner circle
-      final innerCirclePaint = Paint()..color = c.withOpacity(0.45);
+      final innerCirclePaint = Paint()
+        ..shader = RadialGradient(
+          colors: [
+            c.withOpacity(0.62),
+            c.withOpacity(0.38),
+          ],
+        ).createShader(Rect.fromCircle(
+          center: Offset((r.left + r.width / 2) * cellSize, (r.top + r.height / 2) * cellSize),
+          radius: r.width * cellSize * 0.42,
+        ));
       final centerX = (r.left + r.width / 2) * cellSize;
       final centerY = (r.top + r.height / 2) * cellSize;
       canvas.drawCircle(
@@ -125,15 +203,108 @@ class LudoBoardPainter extends CustomPainter {
 
     for (final entry in BoardLayout.homeColumns.entries) {
       final color = colors[entry.key]!;
-      final paint = Paint()..color = color.withOpacity(0.45);
+      final paint = Paint()..color = color.withOpacity(0.52);
       for (int i = 0; i < entry.value.length - 1; i++) {
         final cell = entry.value[i];
+        final rect = Rect.fromLTWH(
+            cell.$2 * cellSize + 1, cell.$1 * cellSize + 1, cellSize - 2, cellSize - 2);
+        canvas.drawRect(rect, paint);
+        _drawSoftStripes(
+          canvas,
+          rect,
+          Colors.white.withOpacity(0.08),
+          cellSize * 0.35,
+        );
         canvas.drawRect(
-            Rect.fromLTWH(cell.$2 * cellSize + 1, cell.$1 * cellSize + 1,
-                cellSize - 2, cellSize - 2),
-            paint);
+          rect,
+          Paint()
+            ..color = Colors.white.withOpacity(0.08)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 0.7,
+        );
       }
     }
+  }
+
+  void _drawEntryArrows(Canvas canvas, double cellSize) {
+    final entries = [
+      (PlayerColor.red, const Color(0xFFE53935)),
+      (PlayerColor.blue, const Color(0xFF1E88E5)),
+      (PlayerColor.green, const Color(0xFF43A047)),
+      (PlayerColor.yellow, const Color(0xFFFDD835)),
+    ];
+
+    for (final entry in entries) {
+      final idx = entry.$1.startPosition;
+      final cell = BoardLayout.outerPath[idx];
+      final next = BoardLayout.outerPath[(idx + 1) % BoardLayout.outerPath.length];
+
+      final cx = cell.$2 * cellSize + cellSize / 2;
+      final cy = cell.$1 * cellSize + cellSize / 2;
+      final dx = (next.$2 - cell.$2).toDouble();
+      final dy = (next.$1 - cell.$1).toDouble();
+      final angle = math.atan2(dy, dx);
+
+      canvas.save();
+      canvas.translate(cx, cy);
+      canvas.rotate(angle);
+
+      final p = Path()
+        ..moveTo(cellSize * 0.22, 0)
+        ..lineTo(-cellSize * 0.16, -cellSize * 0.19)
+        ..lineTo(-cellSize * 0.16, -cellSize * 0.07)
+        ..lineTo(-cellSize * 0.30, -cellSize * 0.07)
+        ..lineTo(-cellSize * 0.30, cellSize * 0.07)
+        ..lineTo(-cellSize * 0.16, cellSize * 0.07)
+        ..lineTo(-cellSize * 0.16, cellSize * 0.19)
+        ..close();
+
+      canvas.drawPath(
+        p,
+        Paint()
+          ..color = Colors.black.withOpacity(0.28)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.3),
+      );
+
+      final arrowRect = Rect.fromCenter(
+        center: Offset.zero,
+        width: cellSize * 0.62,
+        height: cellSize * 0.42,
+      );
+      canvas.drawPath(
+        p,
+        Paint()
+          ..shader = LinearGradient(
+            colors: [
+              Color.lerp(entry.$2, Colors.white, 0.22)!,
+              Color.lerp(entry.$2, Colors.black, 0.08)!,
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ).createShader(arrowRect),
+      );
+      canvas.drawPath(
+        p,
+        Paint()
+          ..color = Colors.white.withOpacity(0.68)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.8,
+      );
+
+      canvas.restore();
+    }
+  }
+
+  void _drawSoftStripes(Canvas canvas, Rect rect, Color color, double spacing) {
+    canvas.save();
+    canvas.clipRRect(RRect.fromRectAndRadius(rect, const Radius.circular(8)));
+    final p = Paint()
+      ..color = color
+      ..strokeWidth = 1;
+    for (double x = rect.left - rect.height; x < rect.right; x += spacing) {
+      canvas.drawLine(Offset(x, rect.top), Offset(x + rect.height, rect.bottom), p);
+    }
+    canvas.restore();
   }
 
   void _drawCentre(Canvas canvas, Size size, double cellSize) {
@@ -348,138 +519,99 @@ class LudoBoardPainter extends CustomPainter {
   // ── 3D Isometric Chess Pawn with collar ─────────────────────────────────
   void _drawChessPawn(Canvas canvas, double cx, double baseY, double cellSize,
       Color color, bool isMovable) {
+    const pawnScale = 1.5;
     final cLight  = Color.lerp(color, Colors.white, 0.58)!;
     final cLight2 = Color.lerp(color, Colors.white, 0.28)!;
     final cDark   = Color.lerp(color, Colors.black, 0.52)!;
 
-    final baseW   = cellSize * 0.52;
-    final baseH   = cellSize * 0.12;
-    final collarW = cellSize * 0.22;
-    final collarH = cellSize * 0.065;
-    final headR   = cellSize * 0.27;
+    final headR = cellSize * 0.33 * pawnScale;
+    final ringR = cellSize * 0.18 * pawnScale;
+    final tipY = baseY - cellSize * 0.02 * pawnScale;
+    final centerY = tipY - headR * 1.06;
 
-    // Y positions (bottom → top)
-    final discTopY      = baseY;
-    final bodyTopY      = discTopY - baseH * 0.5 - cellSize * 0.18;
-    final collarBottomY = bodyTopY - cellSize * 0.01;
-    final collarTopY    = collarBottomY - collarH;
-    final headY         = collarTopY - headR * 0.95;
-
-    // 1. Drop shadow
+    // Drop shadow under the pin.
     canvas.drawOval(
       Rect.fromCenter(
-          center: Offset(cx + 2.5, discTopY + 5),
-          width: baseW * 1.9,
-          height: baseH * 1.6),
+        center: Offset(cx + 2.2 * pawnScale, tipY + 5.5 * pawnScale),
+        width: cellSize * 0.66 * pawnScale,
+        height: cellSize * 0.24 * pawnScale,
+      ),
       Paint()
         ..color = Colors.black.withOpacity(0.42)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 5 * pawnScale),
     );
 
-    // 2. Base disc – dark bottom rim
-    canvas.drawOval(
-      Rect.fromCenter(
-          center: Offset(cx, discTopY + baseH * 0.38),
-          width: baseW,
-          height: baseH * 0.65),
-      Paint()..color = cDark,
-    );
-
-    // 3. Base disc – top surface
-    final baseRect = Rect.fromCenter(
-        center: Offset(cx, discTopY), width: baseW, height: baseH * 0.65);
-    canvas.drawOval(
-      baseRect,
-      Paint()
-        ..shader = LinearGradient(
-          colors: [cLight, cLight2, cDark],
-          stops: const [0.0, 0.45, 1.0],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ).createShader(baseRect),
-    );
-
-    // 4. Body (trapezoid: wide at base, narrows to collar width)
-    final bodyPath = Path()
-      ..moveTo(cx - baseW * 0.42, discTopY)
-      ..lineTo(cx - collarW / 2 - 2, collarBottomY)
-      ..lineTo(cx + collarW / 2 + 2, collarBottomY)
-      ..lineTo(cx + baseW * 0.42, discTopY)
+    // Cartoon map-pin silhouette.
+    final pin = Path()
+      ..moveTo(cx, tipY)
+      ..quadraticBezierTo(cx - headR * 1.12, centerY + headR * 0.45, cx - headR * 0.80, centerY - headR * 0.12)
+      ..arcTo(Rect.fromCircle(center: Offset(cx, centerY), radius: headR), math.pi * 1.12, math.pi * 1.76, false)
+      ..quadraticBezierTo(cx + headR * 1.12, centerY + headR * 0.45, cx, tipY)
       ..close();
+
+    final pinRect = Rect.fromLTWH(
+      cx - headR * 1.14,
+      centerY - headR * 1.15,
+      headR * 2.28,
+      tipY - (centerY - headR * 1.15),
+    );
     canvas.drawPath(
-      bodyPath,
+      pin,
       Paint()
         ..shader = LinearGradient(
-          colors: [cLight, cLight2, cDark],
-          stops: const [0.0, 0.38, 1.0],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-        ).createShader(Rect.fromLTWH(
-            cx - baseW / 2, collarBottomY, baseW, discTopY - collarBottomY)),
+          colors: [cLight, color, cDark],
+          stops: const [0.0, 0.48, 1.0],
+        ).createShader(pinRect),
     );
-
-    // 5. Collar ring – dark bottom rim
-    canvas.drawOval(
-      Rect.fromCenter(
-          center: Offset(cx, collarBottomY + collarH * 0.38),
-          width: collarW,
-          height: collarH * 0.65),
-      Paint()..color = cDark,
-    );
-
-    // 6. Collar ring – top surface
-    final collarRect = Rect.fromCenter(
-        center: Offset(cx, collarBottomY), width: collarW, height: collarH * 0.65);
-    canvas.drawOval(
-      collarRect,
+    canvas.drawPath(
+      pin,
       Paint()
-        ..shader = LinearGradient(
-          colors: [cLight, cLight2],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ).createShader(collarRect),
+        ..color = Colors.white.withOpacity(0.50)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0,
     );
 
-    // 7. Head sphere with radial gradient
-    final headRect = Rect.fromCircle(center: Offset(cx, headY), radius: headR);
+    // Inner ring for the map-pin look.
+    final ringRect = Rect.fromCircle(center: Offset(cx, centerY), radius: ringR);
     canvas.drawCircle(
-      Offset(cx, headY),
-      headR,
+      Offset(cx, centerY),
+      ringR,
       Paint()
         ..shader = RadialGradient(
-          center: const Alignment(-0.40, -0.42),
-          radius: 1.0,
-          colors: [cLight, color, cDark],
-          stops: const [0.0, 0.44, 1.0],
-        ).createShader(headRect),
+          colors: [cDark, Colors.black.withOpacity(0.65)],
+        ).createShader(ringRect),
+    );
+    canvas.drawCircle(
+      Offset(cx, centerY),
+      ringR * 0.62,
+      Paint()
+        ..shader = RadialGradient(
+          colors: [Colors.white.withOpacity(0.9), cLight2],
+        ).createShader(Rect.fromCircle(center: Offset(cx, centerY), radius: ringR * 0.62)),
     );
 
-    // 8a. Primary specular highlight
+    // Specular highlight.
     canvas.drawCircle(
-      Offset(cx - headR * 0.38, headY - headR * 0.38),
-      headR * 0.31,
-      Paint()..color = Colors.white.withOpacity(0.75),
-    );
-    // 8b. Secondary specular dot
-    canvas.drawCircle(
-      Offset(cx - headR * 0.17, headY - headR * 0.60),
-      headR * 0.13,
-      Paint()..color = Colors.white.withOpacity(0.52),
+      Offset(cx - headR * 0.36, centerY - headR * 0.42),
+      headR * 0.22,
+      Paint()..color = Colors.white.withOpacity(0.74),
     );
 
     // 9. Movable glow rings
     if (isMovable) {
       canvas.drawCircle(
-        Offset(cx, headY),
-        headR + 6,
+        Offset(cx, centerY),
+        headR + 6 * pawnScale,
         Paint()
           ..color = Colors.amber
           ..strokeWidth = 2.5
           ..style = PaintingStyle.stroke,
       );
       canvas.drawCircle(
-        Offset(cx, headY),
-        headR + 10,
+        Offset(cx, centerY),
+        headR + 10 * pawnScale,
         Paint()
           ..color = Colors.white.withOpacity(0.55)
           ..strokeWidth = 1.5
