@@ -121,6 +121,9 @@ class _LudoBoardWidgetState extends State<LudoBoardWidget>
             activeMove: _ctrl.isAnimating ? _activeMove : null,
             animProgress: _ctrl.value,
             activeCapture: _captureCtrl.isAnimating ? _activeCapture : null,
+            pendingCapture: (_ctrl.isAnimating && _queuedCapture != null)
+                ? _queuedCapture
+                : null,
             captureProgress: _captureCtrl.value,
           ),
         ),

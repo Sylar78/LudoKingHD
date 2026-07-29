@@ -54,9 +54,21 @@ class GameScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   for (final p in state.players.take(2))
-                    PlayerInfoPanel(
-                      player: p,
-                      isActive: state.players.indexOf(p) == state.currentPlayerIndex,
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        PlayerInfoPanel(
+                          player: p,
+                          isActive:
+                              state.players.indexOf(p) == state.currentPlayerIndex,
+                        ),
+                        const SizedBox(width: 6),
+                        _PlayerMiniDice(
+                          value: state.diceValue,
+                          isActive:
+                              state.players.indexOf(p) == state.currentPlayerIndex,
+                        ),
+                      ],
                     ),
                 ],
               ),
@@ -105,9 +117,21 @@ class GameScreen extends StatelessWidget {
                     for (final p in state.players.length == 4
                         ? [state.players[3], state.players[2]]
                         : state.players.skip(2).toList())
-                      PlayerInfoPanel(
-                        player: p,
-                        isActive: state.players.indexOf(p) == state.currentPlayerIndex,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          PlayerInfoPanel(
+                            player: p,
+                            isActive: state.players.indexOf(p) ==
+                                state.currentPlayerIndex,
+                          ),
+                          const SizedBox(width: 6),
+                          _PlayerMiniDice(
+                            value: state.diceValue,
+                            isActive: state.players.indexOf(p) ==
+                                state.currentPlayerIndex,
+                          ),
+                        ],
                       ),
                   ],
                 ),
@@ -206,6 +230,52 @@ class GameScreen extends StatelessWidget {
       provider.reset();
       if (context.mounted) Navigator.of(context).pop();
     }
+  }
+}
+
+class _PlayerMiniDice extends StatelessWidget {
+  final int value;
+  final bool isActive;
+
+  const _PlayerMiniDice({required this.value, required this.isActive});
+
+  static const _glyph = ['?', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      width: 30,
+      height: 30,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFDFDFD), Color(0xFFD9DCE2)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(
+          color: isActive ? const Color(0xFFFFC84B) : Colors.white24,
+          width: isActive ? 1.8 : 1.1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.28),
+            blurRadius: 6,
+            offset: const Offset(1, 3),
+          ),
+        ],
+      ),
+      child: Text(
+        _glyph[value.clamp(1, 6)],
+        style: TextStyle(
+          fontSize: 17,
+          color: isActive ? const Color(0xFF171717) : const Color(0xFF3C3C3C),
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
   }
 }
 

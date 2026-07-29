@@ -14,6 +14,7 @@ class LudoBoardPainter extends CustomPainter {
   final LastMoveInfo? activeMove;
   final double animProgress;
   final CaptureEffectInfo? activeCapture;
+  final CaptureEffectInfo? pendingCapture;
   final double captureProgress;
 
   LudoBoardPainter({
@@ -22,6 +23,7 @@ class LudoBoardPainter extends CustomPainter {
     this.activeMove,
     this.animProgress = 0.0,
     this.activeCapture,
+    this.pendingCapture,
     this.captureProgress = 0.0,
   });
 
@@ -94,6 +96,18 @@ class LudoBoardPainter extends CustomPainter {
       ..color = const Color(0xFFD6DDFF).withOpacity(0.18)
       ..strokeWidth = 0.95
       ..style = PaintingStyle.stroke;
+
+    // Paint all outer-path cells with a white tile fill.
+    final whiteCellPaint = Paint()..color = Colors.white.withOpacity(0.92);
+    for (final cell in BoardLayout.outerPath) {
+      final rect = Rect.fromLTWH(
+        cell.$2 * cellSize + 0.5,
+        cell.$1 * cellSize + 0.5,
+        cellSize - 1,
+        cellSize - 1,
+      );
+      canvas.drawRect(rect, whiteCellPaint);
+    }
 
     final laneHighlight = Paint()
       ..color = Colors.white.withOpacity(0.055)
@@ -382,7 +396,7 @@ class LudoBoardPainter extends CustomPainter {
     for (int pi = 0; pi < s.players.length; pi++) {
       final player = s.players[pi];
       for (int i = 0; i < player.pawns.length; i++) {
-        if (_isCaptureAnimatedPawn(pi, i)) continue;
+        if (_isCaptureReservedPawn(pi, i)) continue;
         // Skip the pawn currently being animated (drawn separately below)
         if (activeMove != null &&
             pi == activeMove!.playerIdx &&
@@ -390,6 +404,12 @@ class LudoBoardPainter extends CustomPainter {
         _drawSinglePawn(canvas, cellSize, player.pawns[i], pi, i, s);
       }
     }
+
+    // Keep captured pawns visible on their captured cell until the attacker arrives.
+    if (pendingCapture != null) {
+      _drawPendingCapturedPawns(canvas, cellSize, s);
+    }
+
     // Animated pawn drawn last so it renders on top
     if (activeMove != null) _drawAnimatedPawn(canvas, cellSize, s);
     if (activeCapture != null) {
@@ -397,11 +417,33 @@ class LudoBoardPainter extends CustomPainter {
     }
   }
 
-  bool _isCaptureAnimatedPawn(int playerIdx, int pawnIdx) {
-    final capture = activeCapture;
-    if (capture == null) return false;
-    return capture.capturedPawns
-        .any((p) => p.playerIdx == playerIdx && p.pawnIdx == pawnIdx);
+  bool _isCaptureReservedPawn(int playerIdx, int pawnIdx) {
+    bool inCapture(CaptureEffectInfo? capture) {
+      if (capture == null) return false;
+      return capture.capturedPawns
+          .any((p) => p.playerIdx == playerIdx && p.pawnIdx == pawnIdx);
+    }
+
+    return inCapture(activeCapture) || inCapture(pendingCapture);
+  }
+
+  void _drawPendingCapturedPawns(Canvas canvas, double cellSize, GameState s) {
+    final capture = pendingCapture;
+    if (capture == null) return;
+
+    for (final p in capture.capturedPawns) {
+      final off = _resolveOffset(p.fromPosition, p.color, p.pawnIdx, cellSize);
+      final stack = _stackOffsetForPosition(
+        s,
+        p.fromPosition,
+        p.playerIdx,
+        p.pawnIdx,
+        cellSize,
+      );
+      final cx = off.$1 + stack.$1;
+      final cy = off.$2 + stack.$2;
+      _drawChessPawn(canvas, cx, cy + cellSize * 0.32, cellSize, p.color.color, false);
+    }
   }
 
   void _drawCaptureHalo(Canvas canvas, double cellSize) {
@@ -504,6 +546,11 @@ class LudoBoardPainter extends CustomPainter {
           BoardLayout.positionToOffset(pawn.position, pawn.color, cellSize);
       cx = off.$1;
       cy = off.$2;
+
+      final stack =
+          _stackOffsetForPosition(s, pawn.position, playerIdx, pawnIdx, cellSize);
+      cx += stack.$1;
+      cy += stack.$2;
     }
 
     final isCurrentPlayer = playerIdx == s.currentPlayerIndex;
@@ -514,6 +561,79 @@ class LudoBoardPainter extends CustomPainter {
     // Vertical centre of the cell → pawn base sits slightly below centre
     final bottomY = cy + cellSize * 0.32;
     _drawChessPawn(canvas, cx, bottomY, cellSize, pawn.color.color, isMovable);
+  }
+
+  (double, double) _stackOffsetForPosition(
+      GameState s, int position, int playerIdx, int pawnIdx, double cellSize) {
+    if (position < 0) return (0, 0);
+
+    final occupants = <({int playerIdx, int pawnIdx})>[];
+
+    for (int pi = 0; pi < s.players.length; pi++) {
+      final player = s.players[pi];
+      for (int i = 0; i < player.pawns.length; i++) {
+        final pawn = player.pawns[i];
+        if (pawn.position != position) continue;
+        if (activeMove != null &&
+            pi == activeMove!.playerIdx &&
+            i == activeMove!.pawnIdx) {
+          continue;
+        }
+        if (_isCaptureReservedPawn(pi, i)) continue;
+        occupants.add((playerIdx: pi, pawnIdx: i));
+      }
+    }
+
+    // Pending captured pawns are still shown on the captured cell until impact.
+    if (pendingCapture != null) {
+      for (final cp in pendingCapture!.capturedPawns) {
+        if (cp.fromPosition != position) continue;
+        final exists = occupants.any(
+          (o) => o.playerIdx == cp.playerIdx && o.pawnIdx == cp.pawnIdx,
+        );
+        if (!exists) {
+          occupants.add((playerIdx: cp.playerIdx, pawnIdx: cp.pawnIdx));
+        }
+      }
+    }
+
+    occupants.sort((a, b) {
+      final byPlayer = a.playerIdx.compareTo(b.playerIdx);
+      if (byPlayer != 0) return byPlayer;
+      return a.pawnIdx.compareTo(b.pawnIdx);
+    });
+
+    final count = occupants.length;
+    if (count <= 1) return (0, 0);
+
+    final selfIndex = occupants.indexWhere(
+      (o) => o.playerIdx == playerIdx && o.pawnIdx == pawnIdx,
+    );
+    if (selfIndex < 0) return (0, 0);
+
+    final spread = cellSize * 0.16;
+    final positions = <(double, double)>[];
+    if (count == 2) {
+      positions.add((-spread, 0));
+      positions.add((spread, 0));
+    } else if (count == 3) {
+      positions.add((-spread, -spread * 0.55));
+      positions.add((spread, -spread * 0.55));
+      positions.add((0, spread));
+    } else if (count == 4) {
+      positions.add((-spread, -spread));
+      positions.add((spread, -spread));
+      positions.add((-spread, spread));
+      positions.add((spread, spread));
+    } else {
+      for (int i = 0; i < count; i++) {
+        final a = (2 * math.pi * i) / count;
+        positions.add((math.cos(a) * spread * 1.2, math.sin(a) * spread * 1.2));
+      }
+    }
+
+    final chosen = positions[selfIndex.clamp(0, positions.length - 1)];
+    return chosen;
   }
 
   // ── 3D Isometric Chess Pawn with collar ─────────────────────────────────

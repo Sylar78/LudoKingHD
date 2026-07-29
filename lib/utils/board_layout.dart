@@ -47,7 +47,7 @@ class BoardLayout {
     (8, 5),                                      // 44
     (8, 4),(8, 3),(8, 2),(8, 1),(8, 0),          // 45-49
     (7, 0),                                      // 50
-    (7, 1),                                      // 51 (wraps back near Red)
+    (6, 0),                                      // 51 (wraps back near Red)
   ];
 
   // --- Home columns (per colour, 5 cells + centre) ---
