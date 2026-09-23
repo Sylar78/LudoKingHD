@@ -4,7 +4,6 @@ import '../models/board_constants.dart';
 import '../models/game_state.dart';
 import '../models/move_info.dart';
 import '../models/pawn.dart';
-import '../models/player.dart';
 import '../models/player_color.dart';
 import '../utils/board_layout.dart';
 

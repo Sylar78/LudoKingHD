@@ -64,10 +64,9 @@ flutter:
 
   uses-material-design: true
 
-  assets:
-    - assets/images/
-    - assets/audio/
-    - assets/data/
+  # Pas de section `assets:` tant qu'il n'y a pas de fichier a declarer :
+  # un dossier annonce mais absent est un avertissement d'analyse, et
+  # l'analyse est bloquante dans les workflows de publication.
 
   # To add assets to your application, add an assets section, like this:
   # assets:

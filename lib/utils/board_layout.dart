@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import '../models/player_color.dart';
 
 /// Maps a PlayerColor + pawn absolute position to pixel (x,y) on a 15×15 grid.
