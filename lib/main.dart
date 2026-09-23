@@ -7,6 +7,7 @@ import 'screens/game_screen.dart';
 import 'screens/learning_path_screen.dart';
 import 'screens/main_menu_screen.dart';
 import 'screens/settings_screen.dart';
+import 'theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,19 +36,7 @@ class LudoKingApp extends StatelessWidget {
     return MaterialApp(
       title: 'Ludo King HD',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF7C4DFF),
-          brightness: Brightness.dark,
-        ),
-        useMaterial3: true,
-        fontFamily: 'Roboto',
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF2D1B69),
-          foregroundColor: Colors.white,
-          elevation: 0,
-        ),
-      ),
+      theme: buildAppTheme(),
       initialRoute: '/',
       routes: {
         '/': (_) => const MainMenuScreen(),
@@ -65,12 +54,11 @@ class _GameScreenWithOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: const [
+    return const Stack(
+      children: [
         GameScreen(),
         GameOverOverlay(),
       ],
     );
   }
 }
-

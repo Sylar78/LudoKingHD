@@ -86,7 +86,8 @@ class LudoBoardPainter extends CustomPainter {
       ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
       ..addRect(Rect.fromLTWH(0, 0, 6 * cellSize, 6 * cellSize))
       ..addRect(Rect.fromLTWH(9 * cellSize, 0, 6 * cellSize, 6 * cellSize))
-      ..addRect(Rect.fromLTWH(9 * cellSize, 9 * cellSize, 6 * cellSize, 6 * cellSize))
+      ..addRect(
+          Rect.fromLTWH(9 * cellSize, 9 * cellSize, 6 * cellSize, 6 * cellSize))
       ..addRect(Rect.fromLTWH(0, 9 * cellSize, 6 * cellSize, 6 * cellSize));
     clip.fillType = PathFillType.evenOdd;
     canvas.clipPath(clip);
@@ -111,8 +112,10 @@ class LudoBoardPainter extends CustomPainter {
     final laneHighlight = Paint()
       ..color = Colors.white.withOpacity(0.055)
       ..style = PaintingStyle.fill;
-    canvas.drawRect(Rect.fromLTWH(6 * cellSize, 0, 3 * cellSize, 15 * cellSize), laneHighlight);
-    canvas.drawRect(Rect.fromLTWH(0, 6 * cellSize, 15 * cellSize, 3 * cellSize), laneHighlight);
+    canvas.drawRect(Rect.fromLTWH(6 * cellSize, 0, 3 * cellSize, 15 * cellSize),
+        laneHighlight);
+    canvas.drawRect(Rect.fromLTWH(0, 6 * cellSize, 15 * cellSize, 3 * cellSize),
+        laneHighlight);
 
     // Subtle diagonal texture for white path cells.
     final texturePaint = Paint()
@@ -127,8 +130,8 @@ class LudoBoardPainter extends CustomPainter {
     }
 
     for (int i = 0; i <= 15; i++) {
-      canvas.drawLine(
-          Offset(i * cellSize, 0), Offset(i * cellSize, size.height), gridPaint);
+      canvas.drawLine(Offset(i * cellSize, 0),
+          Offset(i * cellSize, size.height), gridPaint);
       canvas.drawLine(
           Offset(0, i * cellSize), Offset(size.width, i * cellSize), gridPaint);
     }
@@ -199,8 +202,7 @@ class LudoBoardPainter extends CustomPainter {
       );
 
       // Optional subtle tint to keep volume while preserving white-square look.
-      final innerCirclePaint = Paint()
-        ..color = c.withOpacity(0.10);
+      final innerCirclePaint = Paint()..color = c.withOpacity(0.10);
       final centerX = (r.left + r.width / 2) * cellSize;
       final centerY = (r.top + r.height / 2) * cellSize;
       canvas.drawCircle(
@@ -224,8 +226,8 @@ class LudoBoardPainter extends CustomPainter {
       final paint = Paint()..color = color.withOpacity(0.92);
       for (int i = 0; i < entry.value.length - 1; i++) {
         final cell = entry.value[i];
-        final rect = Rect.fromLTWH(
-            cell.$2 * cellSize + 1, cell.$1 * cellSize + 1, cellSize - 2, cellSize - 2);
+        final rect = Rect.fromLTWH(cell.$2 * cellSize + 1,
+            cell.$1 * cellSize + 1, cellSize - 2, cellSize - 2);
         canvas.drawRect(rect, paint);
         canvas.drawRect(
           rect,
@@ -249,7 +251,8 @@ class LudoBoardPainter extends CustomPainter {
     for (final entry in entries) {
       final idx = entry.$1.startPosition;
       final cell = BoardLayout.outerPath[idx];
-      final next = BoardLayout.outerPath[(idx + 1) % BoardLayout.outerPath.length];
+      final next =
+          BoardLayout.outerPath[(idx + 1) % BoardLayout.outerPath.length];
 
       final cx = cell.$2 * cellSize + cellSize / 2;
       final cy = cell.$1 * cellSize + cellSize / 2;
@@ -307,18 +310,6 @@ class LudoBoardPainter extends CustomPainter {
     }
   }
 
-  void _drawSoftStripes(Canvas canvas, Rect rect, Color color, double spacing) {
-    canvas.save();
-    canvas.clipRRect(RRect.fromRectAndRadius(rect, const Radius.circular(8)));
-    final p = Paint()
-      ..color = color
-      ..strokeWidth = 1;
-    for (double x = rect.left - rect.height; x < rect.right; x += spacing) {
-      canvas.drawLine(Offset(x, rect.top), Offset(x + rect.height, rect.bottom), p);
-    }
-    canvas.restore();
-  }
-
   void _drawCentre(Canvas canvas, Size size, double cellSize) {
     final cx = size.width / 2;
     final cy = size.height / 2;
@@ -326,10 +317,22 @@ class LudoBoardPainter extends CustomPainter {
 
     // Draw a coloured triangle for each quadrant
     final colours = [
-      (const Color(0xFF1E88E5), [Offset(cx, cy), Offset(cx - r, cy - r), Offset(cx + r, cy - r)]), // top=blue
-      (const Color(0xFF43A047), [Offset(cx, cy), Offset(cx + r, cy - r), Offset(cx + r, cy + r)]), // right=green
-      (const Color(0xFFFDD835), [Offset(cx, cy), Offset(cx + r, cy + r), Offset(cx - r, cy + r)]), // bottom=yellow
-      (const Color(0xFFE53935), [Offset(cx, cy), Offset(cx - r, cy + r), Offset(cx - r, cy - r)]), // left=red
+      (
+        const Color(0xFF1E88E5),
+        [Offset(cx, cy), Offset(cx - r, cy - r), Offset(cx + r, cy - r)]
+      ), // top=blue
+      (
+        const Color(0xFF43A047),
+        [Offset(cx, cy), Offset(cx + r, cy - r), Offset(cx + r, cy + r)]
+      ), // right=green
+      (
+        const Color(0xFFFDD835),
+        [Offset(cx, cy), Offset(cx + r, cy + r), Offset(cx - r, cy + r)]
+      ), // bottom=yellow
+      (
+        const Color(0xFFE53935),
+        [Offset(cx, cy), Offset(cx - r, cy + r), Offset(cx - r, cy - r)]
+      ), // left=red
     ];
 
     for (final tri in colours) {
@@ -356,14 +359,16 @@ class LudoBoardPainter extends CustomPainter {
       if (idx < 0 || idx >= BoardLayout.outerPath.length) continue;
       final cell = BoardLayout.outerPath[idx];
       final left = cell.$2 * cellSize;
-      final top  = cell.$1 * cellSize;
-      final cx   = left + cellSize / 2;
-      final cy   = top  + cellSize / 2;
+      final top = cell.$1 * cellSize;
+      final cx = left + cellSize / 2;
+      final cy = top + cellSize / 2;
 
       final startColor = startCellColors[idx];
       if (startColor != null) {
-        final cellRect = Rect.fromLTWH(left + 0.5, top + 0.5, cellSize - 1, cellSize - 1);
-        canvas.drawRect(cellRect, Paint()..color = startColor.withOpacity(0.92));
+        final cellRect =
+            Rect.fromLTWH(left + 0.5, top + 0.5, cellSize - 1, cellSize - 1);
+        canvas.drawRect(
+            cellRect, Paint()..color = startColor.withOpacity(0.92));
         canvas.drawRect(
           cellRect,
           Paint()
@@ -461,7 +466,8 @@ class LudoBoardPainter extends CustomPainter {
       );
       final cx = off.$1 + stack.$1;
       final cy = off.$2 + stack.$2;
-      _drawChessPawn(canvas, cx, cy + cellSize * 0.32, cellSize, p.color.color, false);
+      _drawChessPawn(
+          canvas, cx, cy + cellSize * 0.32, cellSize, p.color.color, false);
     }
   }
 
@@ -489,8 +495,7 @@ class LudoBoardPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.8;
 
-    final fillPaint = Paint()
-      ..color = Colors.red.withOpacity(0.10 * (1 - t));
+    final fillPaint = Paint()..color = Colors.red.withOpacity(0.10 * (1 - t));
 
     final rr = RRect.fromRectAndRadius(rect, Radius.circular(cellSize * 0.12));
     canvas.drawRRect(rr, fillPaint);
@@ -516,31 +521,31 @@ class LudoBoardPainter extends CustomPainter {
 
   // Interpolated hop animation – advances one cell at a time
   void _drawAnimatedPawn(Canvas canvas, double cellSize, GameState s) {
-    final move  = activeMove!;
-    final pawn  = s.players[move.playerIdx].pawns[move.pawnIdx];
-    final path  = move.path;
+    final move = activeMove!;
+    final pawn = s.players[move.playerIdx].pawns[move.pawnIdx];
+    final path = move.path;
 
     if (path.isEmpty) return;
 
     final numSteps = path.length;
-    final totalT   = animProgress.clamp(0.0, 1.0);
-    final scaledT  = totalT * numSteps;
-    final stepIdx  = scaledT.floor().clamp(0, numSteps - 1);
-    final stepT    = (scaledT - stepIdx).clamp(0.0, 1.0);
+    final totalT = animProgress.clamp(0.0, 1.0);
+    final scaledT = totalT * numSteps;
+    final stepIdx = scaledT.floor().clamp(0, numSteps - 1);
+    final stepT = (scaledT - stepIdx).clamp(0.0, 1.0);
 
     final fromPos = stepIdx == 0 ? move.fromPosition : path[stepIdx - 1];
-    final toPos   = path[stepIdx];
+    final toPos = path[stepIdx];
 
     final from = _resolveOffset(fromPos, move.color, move.pawnIdx, cellSize);
-    final to   = _resolveOffset(toPos,   move.color, move.pawnIdx, cellSize);
+    final to = _resolveOffset(toPos, move.color, move.pawnIdx, cellSize);
 
-    final t   = Curves.easeInOut.transform(stepT);
-    final cx  = from.$1 + (to.$1 - from.$1) * t;
-    final cy  = from.$2 + (to.$2 - from.$2) * t;
+    final t = Curves.easeInOut.transform(stepT);
+    final cx = from.$1 + (to.$1 - from.$1) * t;
+    final cy = from.$2 + (to.$2 - from.$2) * t;
     final hop = cellSize * 0.85 * math.sin(math.pi * t); // hop height per step
 
-    _drawChessPawn(
-        canvas, cx, cy - hop + cellSize * 0.33, cellSize, pawn.color.color, false);
+    _drawChessPawn(canvas, cx, cy - hop + cellSize * 0.33, cellSize,
+        pawn.color.color, false);
   }
 
   (double, double) _resolveOffset(
@@ -556,8 +561,7 @@ class LudoBoardPainter extends CustomPainter {
     double cx, cy;
 
     if (pawn.isInBase) {
-      final off =
-          BoardLayout.basePositionOffset(pawn.color, pawnIdx, cellSize);
+      final off = BoardLayout.basePositionOffset(pawn.color, pawnIdx, cellSize);
       cx = off.$1;
       cy = off.$2;
     } else {
@@ -566,8 +570,8 @@ class LudoBoardPainter extends CustomPainter {
       cx = off.$1;
       cy = off.$2;
 
-      final stack =
-          _stackOffsetForPosition(s, pawn.position, playerIdx, pawnIdx, cellSize);
+      final stack = _stackOffsetForPosition(
+          s, pawn.position, playerIdx, pawnIdx, cellSize);
       cx += stack.$1;
       cy += stack.$2;
     }
@@ -659,9 +663,9 @@ class LudoBoardPainter extends CustomPainter {
   void _drawChessPawn(Canvas canvas, double cx, double baseY, double cellSize,
       Color color, bool isMovable) {
     const pawnScale = 1.5;
-    final cLight  = Color.lerp(color, Colors.white, 0.58)!;
+    final cLight = Color.lerp(color, Colors.white, 0.58)!;
     final cLight2 = Color.lerp(color, Colors.white, 0.28)!;
-    final cDark   = Color.lerp(color, Colors.black, 0.52)!;
+    final cDark = Color.lerp(color, Colors.black, 0.52)!;
 
     final headR = cellSize * 0.33 * pawnScale;
     final ringR = cellSize * 0.18 * pawnScale;
@@ -677,14 +681,16 @@ class LudoBoardPainter extends CustomPainter {
       ),
       Paint()
         ..color = Colors.black.withOpacity(0.42)
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 5 * pawnScale),
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5 * pawnScale),
     );
 
     // Cartoon map-pin silhouette.
     final pin = Path()
       ..moveTo(cx, tipY)
-      ..quadraticBezierTo(cx - headR * 1.12, centerY + headR * 0.45, cx - headR * 0.80, centerY - headR * 0.12)
-      ..arcTo(Rect.fromCircle(center: Offset(cx, centerY), radius: headR), math.pi * 1.12, math.pi * 1.76, false)
+      ..quadraticBezierTo(cx - headR * 1.12, centerY + headR * 0.45,
+          cx - headR * 0.80, centerY - headR * 0.12)
+      ..arcTo(Rect.fromCircle(center: Offset(cx, centerY), radius: headR),
+          math.pi * 1.12, math.pi * 1.76, false)
       ..quadraticBezierTo(cx + headR * 1.12, centerY + headR * 0.45, cx, tipY)
       ..close();
 
@@ -713,7 +719,8 @@ class LudoBoardPainter extends CustomPainter {
     );
 
     // Inner ring for the map-pin look.
-    final ringRect = Rect.fromCircle(center: Offset(cx, centerY), radius: ringR);
+    final ringRect =
+        Rect.fromCircle(center: Offset(cx, centerY), radius: ringR);
     canvas.drawCircle(
       Offset(cx, centerY),
       ringR,
@@ -728,7 +735,8 @@ class LudoBoardPainter extends CustomPainter {
       Paint()
         ..shader = RadialGradient(
           colors: [Colors.white.withOpacity(0.9), cLight2],
-        ).createShader(Rect.fromCircle(center: Offset(cx, centerY), radius: ringR * 0.62)),
+        ).createShader(
+            Rect.fromCircle(center: Offset(cx, centerY), radius: ringR * 0.62)),
     );
 
     // Specular highlight.

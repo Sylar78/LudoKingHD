@@ -59,9 +59,9 @@ class GameProvider extends ChangeNotifier {
       s.currentPlayer.consecutiveSixes++;
       if (s.currentPlayer.consecutiveSixes >= 3) {
         s.currentPlayer.consecutiveSixes = 0;
-        s.message =
-            "Trois 6 consécutifs ! Tour annulé pour ${s.currentPlayer.color.name}.";
-        _endTurn();
+        _endTurn(
+            raison:
+                "Trois 6 de suite : tour annulé pour ${s.currentPlayer.color.name}.");
         notifyListeners();
         if (s.currentPlayer.type == PlayerType.computer) {
           await _triggerAiTurn();
@@ -72,13 +72,12 @@ class GameProvider extends ChangeNotifier {
       s.currentPlayer.consecutiveSixes = 0;
     }
 
-    final movable =
-        GameEngine.movablePawns(s.currentPlayer, value, s);
+    final movable = GameEngine.movablePawns(s.currentPlayer, value, s);
 
     if (movable.isEmpty) {
-      s.message =
-          "Aucun coup possible (${s.currentPlayer.color.name}).";
-      _endTurn();
+      _endTurn(
+          raison:
+              "Aucun coup possible pour ${s.currentPlayer.color.name} avec un $value.");
       notifyListeners();
       // Auto-advance AI
       if (s.currentPlayer.type == PlayerType.computer) {
@@ -106,15 +105,13 @@ class GameProvider extends ChangeNotifier {
 
     s.movablePawnIndices = movable;
     s.phase = GamePhase.choosingPawn;
-    s.message =
-        "${s.currentPlayer.color.name} : choisissez un pion.";
+    s.message = "${s.currentPlayer.color.name} : choisissez un pion.";
     notifyListeners();
 
     // AI auto-chooses
     if (s.currentPlayer.type == PlayerType.computer) {
       await Future.delayed(const Duration(milliseconds: 700));
-      final aiChoice =
-          GameEngine.chooseAiPawn(s.currentPlayer, value, s);
+      final aiChoice = GameEngine.chooseAiPawn(s.currentPlayer, value, s);
       if (aiChoice >= 0) movePawn(aiChoice);
     }
   }
@@ -179,9 +176,7 @@ class GameProvider extends ChangeNotifier {
 
     // Extra roll?
     final extra = GameEngine.earnsExtraRoll(
-        dice: s.diceValue,
-        captured: captured,
-        reachedHome: reachedHome);
+        dice: s.diceValue, captured: captured, reachedHome: reachedHome);
 
     if (extra && !player.hasFinished) {
       s.hasRolled = false;
@@ -204,14 +199,19 @@ class GameProvider extends ChangeNotifier {
 
   // ── Internal helpers ─────────────────────────────────────────────────────
 
-  void _endTurn() {
+  /// Passe la main. [raison] explique pourquoi le tour s'arrête.
+  ///
+  /// Sans ce paramètre, le message posé juste avant l'appel était écrasé par
+  /// « Tour de X. » : le joueur ne voyait jamais qu'il n'avait aucun coup
+  /// possible, ni qu'il venait de faire trois 6.
+  void _endTurn({String? raison}) {
     final s = _state!;
     s.hasRolled = false;
     s.movablePawnIndices = [];
     s.phase = GamePhase.rolling;
     s.currentPlayerIndex = GameEngine.nextPlayerIndex(s);
-    s.message =
-        "Tour de ${s.currentPlayer.color.name}.";
+    final suite = "Tour de ${s.currentPlayer.color.name}.";
+    s.message = raison == null ? suite : "$raison $suite";
   }
 
   Future<void> _triggerAiTurn() async {

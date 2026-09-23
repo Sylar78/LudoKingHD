@@ -1,186 +1,191 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+
 import '../models/game_state.dart';
 import '../models/player_color.dart';
 import '../providers/game_provider.dart';
+import '../theme/app_theme.dart';
+import '../widgets/app_background.dart';
+import '../widgets/arcade.dart';
 
-class MainMenuScreen extends StatefulWidget {
+class MainMenuScreen extends StatelessWidget {
   const MainMenuScreen({super.key});
 
   @override
-  State<MainMenuScreen> createState() => _MainMenuScreenState();
-}
-
-class _MainMenuScreenState extends State<MainMenuScreen> {
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1035),
-      body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 32),
-            // Title
-            _buildTitle(),
-            const SizedBox(height: 48),
-            // Menu buttons
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
-                children: [
-                  _MenuButton(
-                    icon: Icons.computer,
-                    label: 'Vs Ordinateur',
-                    subtitle: 'Choix des joueurs et de votre couleur',
-                    color: const Color(0xFF7C4DFF),
-                    onTap: () => _showVsComputerSetupFlow(context),
-                  ),
-                  const SizedBox(height: 16),
-                  _MenuButton(
-                    icon: Icons.people,
-                    label: 'Multijoueur Local',
-                    subtitle: '2 à 4 joueurs sur cet appareil',
-                    color: const Color(0xFF00BCD4),
-                    onTap: () =>
-                        _showPlayerCountDialog(context),
-                  ),
-                  const SizedBox(height: 16),
-                  _MenuButton(
-                    icon: Icons.school,
-                    label: 'Apprendre',
-                    subtitle: 'Maîtrise les règles étape par étape',
-                    color: const Color(0xFF4CAF50),
-                    onTap: () =>
-                        Navigator.pushNamed(context, '/learn'),
-                  ),
-                  const SizedBox(height: 16),
-                  _MenuButton(
-                    icon: Icons.settings,
-                    label: 'Paramètres',
-                    subtitle: 'Sons, thèmes...',
-                    color: const Color(0xFF607D8B),
-                    onTap: () =>
-                        Navigator.pushNamed(context, '/settings'),
-                  ),
-                ],
+      body: AppBackground(
+        child: SafeArea(
+          child: Center(
+            // Le menu tenait dans un ListView etire sur toute la hauteur, ce
+            // qui laissait un grand vide sous le dernier bouton. Il est
+            // maintenant centre, et borne pour rester lisible sur tablette.
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 460),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const _Logo(),
+                    const SizedBox(height: 36),
+                    _MenuButton(
+                      icon: Icons.smart_toy_rounded,
+                      label: 'Contre l\'ordinateur',
+                      subtitle: 'Choisis le nombre de joueurs et ta couleur',
+                      color: AppColors.violet,
+                      onTap: () => _flotVsOrdinateur(context),
+                    ),
+                    const SizedBox(height: 14),
+                    _MenuButton(
+                      icon: Icons.groups_rounded,
+                      label: 'Multijoueur local',
+                      subtitle: '2 à 4 joueurs sur cet appareil',
+                      color: const Color(0xFF00ACC1),
+                      onTap: () => _flotMultijoueur(context),
+                    ),
+                    const SizedBox(height: 14),
+                    _MenuButton(
+                      icon: Icons.menu_book_rounded,
+                      label: 'Apprendre',
+                      subtitle: 'Les règles, étape par étape',
+                      color: const Color(0xFF43A047),
+                      onTap: () => Navigator.pushNamed(context, '/learn'),
+                    ),
+                    const SizedBox(height: 14),
+                    _MenuButton(
+                      icon: Icons.tune_rounded,
+                      label: 'Paramètres',
+                      subtitle: 'Sons et affichage',
+                      color: const Color(0xFF607D8B),
+                      onTap: () => Navigator.pushNamed(context, '/settings'),
+                    ),
+                  ],
+                ),
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.all(12),
-              child: Text('v1.0.0 · Ludo King HD',
-                  style: TextStyle(color: Colors.white30, fontSize: 11)),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildTitle() {
-    return Column(
-      children: [
-        const Text('👑', style: TextStyle(fontSize: 60))
-            .animate()
-            .scale(duration: 800.ms, curve: Curves.elasticOut),
-        const SizedBox(height: 8),
-        ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: [Color(0xFFFFD700), Color(0xFFFF6F00)],
-          ).createShader(bounds),
-          child: const Text(
-            'LUDO KING HD',
-            style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-                letterSpacing: 3),
-          ),
-        ).animate().fadeIn(delay: 300.ms).slideY(begin: -0.3),
-        const SizedBox(height: 4),
-        const Text(
-          'Le jeu des Petits Chevaux',
-          style: TextStyle(color: Colors.white54, fontSize: 13),
-        ).animate().fadeIn(delay: 500.ms),
-      ],
-    );
-  }
+  // ── Les deux parcours de lancement ────────────────────────────────────────
 
-  void _startGame(BuildContext context, GameMode mode,
-      {int playerCount = 4}) {
-    const allColors = PlayerColor.values;
-    final colors = allColors.take(playerCount).toList();
-    _startGameWithColors(context, mode, colors);
-  }
-
-  void _startGameWithColors(
-      BuildContext context, GameMode mode, List<PlayerColor> colors) {
-    context.read<GameProvider>().startGame(mode, colors);
-    Navigator.pushNamed(context, '/game');
-  }
-
-  Future<void> _showPlayerCountDialog(BuildContext context) async {
-    final count = await showDialog<int>(
+  Future<void> _flotMultijoueur(BuildContext context) async {
+    final nombre = await showDialog<int>(
       context: context,
-      builder: (ctx) => _PlayerCountDialog(),
+      barrierColor: Colors.black87,
+      builder: (_) => const _NombreDeJoueursDialog(
+        titre: 'COMBIEN DE JOUEURS ?',
+        choix: [2, 3, 4],
+      ),
     );
-    if (count != null && context.mounted) {
-      _startGame(context, GameMode.localMultiplayer, playerCount: count);
-    }
+    if (nombre == null || !context.mounted) return;
+    _lancer(context, GameMode.localMultiplayer,
+        PlayerColor.values.take(nombre).toList());
   }
 
-  Future<void> _showVsComputerSetupFlow(BuildContext context) async {
+  Future<void> _flotVsOrdinateur(BuildContext context) async {
     while (context.mounted) {
-      final count = await showDialog<int>(
+      final nombre = await showDialog<int>(
         context: context,
         barrierDismissible: false,
         barrierColor: Colors.black87,
-        builder: (ctx) => const _VsComputerPlayerCountDialog(),
+        builder: (_) => const _NombreDeJoueursDialog(
+          titre: 'COMBIEN DE JOUEURS ?',
+          choix: [2, 3, 4],
+        ),
       );
+      if (nombre == null || !context.mounted) return;
 
-      if (count == null || !context.mounted) {
-        return;
-      }
-
-      final colorSelection = await showDialog<Object>(
+      final choix = await showDialog<Object>(
         context: context,
         barrierDismissible: false,
         barrierColor: Colors.black87,
-        builder: (ctx) => const _VsComputerColorDialog(),
+        builder: (_) => const _ChoixCouleurDialog(),
       );
 
-      if (colorSelection == _VsSetupFlowAction.back) {
-        continue;
-      }
+      // Le bouton retour ramène au choix du nombre de joueurs.
+      if (choix == _EtapeAction.retour) continue;
+      if (choix is! PlayerColor || !context.mounted) return;
 
-      if (colorSelection is! PlayerColor || !context.mounted) {
-        return;
-      }
-
-      final colors = _buildVsComputerColors(colorSelection, count);
-      _startGameWithColors(context, GameMode.vsComputer, colors);
+      _lancer(context, GameMode.vsComputer, _couleurs(choix, nombre));
       return;
     }
   }
 
-  List<PlayerColor> _buildVsComputerColors(PlayerColor humanColor, int count) {
-    if (count == 2) {
-      final opponent = switch (humanColor) {
+  void _lancer(
+      BuildContext context, GameMode mode, List<PlayerColor> couleurs) {
+    context.read<GameProvider>().startGame(mode, couleurs);
+    Navigator.pushNamed(context, '/game');
+  }
+
+  /// L'humain d'abord, puis ses adversaires. À deux, on prend la couleur d'en
+  /// face : le plateau reste équilibré.
+  static List<PlayerColor> _couleurs(PlayerColor humain, int nombre) {
+    if (nombre == 2) {
+      final adversaire = switch (humain) {
         PlayerColor.red => PlayerColor.green,
         PlayerColor.green => PlayerColor.red,
         PlayerColor.blue => PlayerColor.yellow,
         PlayerColor.yellow => PlayerColor.blue,
       };
-      return [humanColor, opponent];
+      return [humain, adversaire];
     }
-
-    final others = PlayerColor.values.where((c) => c != humanColor).toList();
-    return [humanColor, ...others];
+    final autres = PlayerColor.values.where((c) => c != humain).toList();
+    return [humain, ...autres.take(nombre - 1)];
   }
 }
 
-enum _VsSetupFlowAction { back }
+enum _EtapeAction { retour }
+
+// ── Le titre ────────────────────────────────────────────────────────────────
+
+class _Logo extends StatelessWidget {
+  const _Logo();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: 96,
+          height: 96,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: RadialGradient(colors: [
+              AppColors.gold.withOpacity(0.35),
+              AppColors.gold.withOpacity(0),
+            ]),
+          ),
+          child: const Text('👑', style: TextStyle(fontSize: 58)),
+        ).animate().scale(duration: 700.ms, curve: Curves.elasticOut),
+        const SizedBox(height: 4),
+        ShaderMask(
+          shaderCallback: (bounds) => const LinearGradient(
+            colors: [Color(0xFFFFE082), AppColors.gold, Color(0xFFFF8F00)],
+          ).createShader(bounds),
+          child: Text(
+            'LUDO KING HD',
+            textAlign: TextAlign.center,
+            style: AppText.display(size: 34, letterSpacing: 2),
+          ),
+        ).animate().fadeIn(delay: 200.ms).slideY(begin: -0.25),
+        const SizedBox(height: 6),
+        const Text(
+          'Le jeu des petits chevaux',
+          style: TextStyle(
+              color: Colors.white60, fontSize: 13, letterSpacing: 0.6),
+        ).animate().fadeIn(delay: 400.ms),
+      ],
+    );
+  }
+}
+
+// ── Les entrées du menu ─────────────────────────────────────────────────────
 
 class _MenuButton extends StatelessWidget {
   final IconData icon;
@@ -207,25 +212,38 @@ class _MenuButton extends StatelessWidget {
         child: Ink(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [color.withOpacity(0.85), color.withOpacity(0.55)],
+              colors: [color.withOpacity(0.92), color.withOpacity(0.58)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(20),
+            // Un liseré clair en haut : la carte accroche la lumière au lieu
+            // d'être un simple aplat.
+            border: Border.all(color: Colors.white.withOpacity(0.22)),
             boxShadow: [
               BoxShadow(
-                  color: color.withOpacity(0.4),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4)),
+                color: color.withOpacity(0.38),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
             ],
           ),
           child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
               children: [
-                Icon(icon, color: Colors.white, size: 32),
-                const SizedBox(width: 16),
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.22),
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(
+                        color: Colors.white.withOpacity(0.28), width: 1.3),
+                  ),
+                  child: Icon(icon, color: Colors.white, size: 28),
+                ),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,91 +251,73 @@ class _MenuButton extends StatelessWidget {
                       Text(label,
                           style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 18,
+                              fontSize: 17,
                               fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 2),
                       Text(subtitle,
-                          style: const TextStyle(
-                              color: Colors.white70, fontSize: 12)),
+                          style: TextStyle(
+                              color: Colors.white.withOpacity(0.82),
+                              fontSize: 12)),
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right, color: Colors.white70),
+                Icon(Icons.chevron_right_rounded,
+                    color: Colors.white.withOpacity(0.75)),
               ],
             ),
           ),
         ),
       ),
-    ).animate().fadeIn(duration: 400.ms).slideX(begin: 0.1);
+    ).animate().fadeIn(duration: 350.ms).slideX(begin: 0.08);
   }
 }
 
-class _PlayerCountDialog extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      backgroundColor: const Color(0xFF2D1B69),
-      title: const Text('Nombre de joueurs',
-          style: TextStyle(color: Colors.white)),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [2, 3, 4].map((n) {
-          return ListTile(
-            title: Text('$n joueurs',
-                style: const TextStyle(color: Colors.white)),
-            leading: const Icon(Icons.person, color: Colors.white70),
-            onTap: () => Navigator.pop(context, n),
-          );
-        }).toList(),
-      ),
-    );
-  }
-}
+// ── Les dialogues ───────────────────────────────────────────────────────────
 
-class _VsComputerPlayerCountDialog extends StatefulWidget {
-  const _VsComputerPlayerCountDialog();
+class _NombreDeJoueursDialog extends StatefulWidget {
+  final String titre;
+  final List<int> choix;
+
+  const _NombreDeJoueursDialog({required this.titre, required this.choix});
 
   @override
-  State<_VsComputerPlayerCountDialog> createState() =>
-      _VsComputerPlayerCountDialogState();
+  State<_NombreDeJoueursDialog> createState() => _NombreDeJoueursDialogState();
 }
 
-class _VsComputerPlayerCountDialogState
-    extends State<_VsComputerPlayerCountDialog> {
-  int _selectedPlayers = 2;
+class _NombreDeJoueursDialogState extends State<_NombreDeJoueursDialog> {
+  late int _selection = widget.choix.first;
 
   @override
   Widget build(BuildContext context) {
-    return _VsBlueFrame(
+    return ArcadeFrame(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(26, 18, 26, 16),
+        padding: const EdgeInsets.fromLTRB(24, 18, 24, 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('SELECT PLAYERS', style: _VsTextStyles.title),
+            ArcadeTitle(widget.titre),
+            const SizedBox(height: 20),
+            for (final n in widget.choix) ...[
+              ArcadeOptionRow(
+                label: '$n JOUEURS',
+                isSelected: _selection == n,
+                onTap: () => setState(() => _selection = n),
+              ),
+              if (n != widget.choix.last) const SizedBox(height: 10),
+            ],
             const SizedBox(height: 24),
-            _VsOptionRow(
-              label: '2 PLAYERS',
-              isSelected: _selectedPlayers == 2,
-              onTap: () => setState(() => _selectedPlayers = 2),
-            ),
-            const SizedBox(height: 14),
-            _VsOptionRow(
-              label: '4 PLAYERS',
-              isSelected: _selectedPlayers == 4,
-              onTap: () => setState(() => _selectedPlayers = 4),
-            ),
-            const SizedBox(height: 28),
             Row(
               children: [
-                _RoundIconButton(
+                ArcadeRoundButton(
                   icon: Icons.undo_rounded,
+                  tooltip: 'Retour',
                   onTap: () => Navigator.pop(context),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
-                  child: _GlowActionButton(
-                    label: 'NEXT',
-                    onTap: () => Navigator.pop(context, _selectedPlayers),
+                  child: ArcadeActionButton(
+                    label: 'SUIVANT',
+                    onTap: () => Navigator.pop(context, _selection),
                   ),
                 ),
               ],
@@ -329,346 +329,68 @@ class _VsComputerPlayerCountDialogState
   }
 }
 
-class _VsComputerColorDialog extends StatefulWidget {
-  const _VsComputerColorDialog();
+class _ChoixCouleurDialog extends StatefulWidget {
+  const _ChoixCouleurDialog();
 
   @override
-  State<_VsComputerColorDialog> createState() => _VsComputerColorDialogState();
+  State<_ChoixCouleurDialog> createState() => _ChoixCouleurDialogState();
 }
 
-class _VsComputerColorDialogState extends State<_VsComputerColorDialog> {
-  PlayerColor _selectedColor = PlayerColor.blue;
+class _ChoixCouleurDialogState extends State<_ChoixCouleurDialog> {
+  PlayerColor _selection = PlayerColor.blue;
 
   @override
   Widget build(BuildContext context) {
-    const colors = PlayerColor.values;
-    return _VsBlueFrame(
+    return ArcadeFrame(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(26, 18, 26, 16),
+        padding: const EdgeInsets.fromLTRB(24, 18, 24, 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('SELECT YOUR COLOR', style: _VsTextStyles.title),
-            const SizedBox(height: 22),
+            const ArcadeTitle('CHOISIS TA COULEUR'),
+            const SizedBox(height: 18),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: colors
-                  .map((color) => _ColorPin(color: color))
-                  .toList(growable: false),
+              children: [
+                for (final couleur in PlayerColor.values)
+                  ColorPin(color: couleur, raised: _selection == couleur),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                for (final couleur in PlayerColor.values)
+                  ColorRingChoice(
+                    color: couleur,
+                    selected: _selection == couleur,
+                    onTap: () => setState(() => _selection = couleur),
+                  ),
+              ],
             ),
             const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: colors
-                  .map(
-                    (color) => _ColorRingChoice(
-                      color: color,
-                      selected: _selectedColor == color,
-                      onTap: () => setState(() => _selectedColor = color),
-                    ),
-                  )
-                  .toList(growable: false),
+            Text(
+              _selection.name,
+              style: AppText.display(size: 18, color: AppColors.goldLight),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 18),
             Row(
               children: [
-                _RoundIconButton(
+                ArcadeRoundButton(
                   icon: Icons.undo_rounded,
-                  onTap: () => Navigator.pop(context, _VsSetupFlowAction.back),
+                  tooltip: 'Retour',
+                  onTap: () => Navigator.pop(context, _EtapeAction.retour),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
-                  child: _GlowActionButton(
-                    label: 'PLAY',
-                    onTap: () => Navigator.pop(context, _selectedColor),
+                  child: ArcadeActionButton(
+                    label: 'JOUER',
+                    onTap: () => Navigator.pop(context, _selection),
                   ),
                 ),
               ],
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _VsBlueFrame extends StatelessWidget {
-  final Widget child;
-
-  const _VsBlueFrame({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 680),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF0A3D93), Color(0xFF134CAD)],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFFFFC107), width: 2.2),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0xAAFFC107),
-                blurRadius: 14,
-                spreadRadius: 1,
-              ),
-            ],
-          ),
-          child: child,
-        ),
-      ),
-    );
-  }
-}
-
-class _VsTextStyles {
-  static final TextStyle title = GoogleFonts.luckiestGuy(
-        color: const Color(0xFFFFD54F),
-        fontWeight: FontWeight.w900,
-        fontSize: 26,
-        letterSpacing: 1.1,
-        shadows: const [
-          Shadow(color: Colors.black, offset: Offset(2, 2), blurRadius: 0),
-          Shadow(color: Colors.black, offset: Offset(-1, 1), blurRadius: 0),
-        ],
-      );
-
-  static final TextStyle label = GoogleFonts.luckiestGuy(
-        color: Colors.white,
-        fontWeight: FontWeight.w900,
-        fontSize: 23,
-        letterSpacing: 1,
-        shadows: const [
-          Shadow(color: Colors.black, offset: Offset(2, 2), blurRadius: 0),
-          Shadow(color: Colors.black, offset: Offset(-1, 1), blurRadius: 0),
-        ],
-      );
-
-  static final TextStyle action = GoogleFonts.luckiestGuy(
-        color: Colors.white,
-        fontSize: 26,
-        fontWeight: FontWeight.w900,
-        letterSpacing: 1.1,
-        shadows: const [
-          Shadow(color: Colors.black, offset: Offset(2, 2), blurRadius: 0),
-        ],
-      );
-}
-
-class _VsOptionRow extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _VsOptionRow({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(30),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
-        child: Row(
-          children: [
-            AnimatedContainer(
-              duration: 180.ms,
-              width: 54,
-              height: 54,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isSelected ? const Color(0xFFFFC107) : Colors.transparent,
-                border: Border.all(
-                    color: const Color(0xFFFFC107), width: 3),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFFFC107)
-                        .withOpacity(isSelected ? 0.65 : 0.30),
-                    blurRadius: 10,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: isSelected
-                  ? const Icon(Icons.check_rounded,
-                      color: Color(0xFF0A3D93), size: 38)
-                  : null,
-            ),
-            const SizedBox(width: 20),
-            Text(
-              label,
-              style: _VsTextStyles.label,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ColorPin extends StatelessWidget {
-  final PlayerColor color;
-
-  const _ColorPin({required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          width: 54,
-          height: 62,
-          child: Stack(
-            alignment: Alignment.topCenter,
-            children: [
-              const Icon(
-                Icons.place,
-                size: 60,
-                color: Colors.white,
-                shadows: [
-                  Shadow(color: Colors.black54, blurRadius: 4),
-                ],
-              ),
-              Positioned(
-                top: 11,
-                child: Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: color.color,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.black26, width: 1.5),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ColorRingChoice extends StatelessWidget {
-  final PlayerColor color;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _ColorRingChoice({
-    required this.color,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(26),
-      child: AnimatedContainer(
-        duration: 180.ms,
-        width: 62,
-        height: 62,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: selected ? const Color(0xFF46C7FF) : Colors.transparent,
-          border: Border.all(color: color.color, width: 5.4),
-          boxShadow: [
-            BoxShadow(
-              color: color.color.withOpacity(selected ? 0.55 : 0.20),
-              blurRadius: selected ? 14 : 8,
-              spreadRadius: selected ? 2 : 1,
-            ),
-          ],
-        ),
-        child: selected
-            ? const Icon(Icons.check_rounded, color: Colors.white, size: 38)
-            : null,
-      ),
-    );
-  }
-}
-
-class _RoundIconButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _RoundIconButton({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(28),
-      child: Ink(
-        width: 62,
-        height: 62,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF2D99FF), Color(0xFF165FC2)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-          shape: BoxShape.circle,
-          border: Border.all(color: const Color(0xFFFFC107), width: 3),
-          boxShadow: const [
-            BoxShadow(
-                color: Color(0x88FFC107),
-                blurRadius: 12,
-                spreadRadius: 1),
-          ],
-        ),
-        child: Icon(icon, color: const Color(0xFFFFD54F), size: 36),
-      ),
-    );
-  }
-}
-
-class _GlowActionButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-
-  const _GlowActionButton({required this.label, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Ink(
-        height: 62,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF2C93FF), Color(0xFF1456B4)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFFFC107), width: 3),
-          boxShadow: const [
-            BoxShadow(
-                color: Color(0x88FFC107),
-                blurRadius: 12,
-                spreadRadius: 1),
-          ],
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: _VsTextStyles.action,
-          ),
         ),
       ),
     );

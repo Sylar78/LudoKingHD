@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import '../models/game_state.dart';
+import '../models/player.dart';
 import '../models/player_color.dart';
 import '../providers/game_provider.dart';
+import '../theme/app_theme.dart';
+import '../widgets/app_background.dart';
 import '../widgets/dice_widget.dart';
 import '../widgets/ludo_board_widget.dart';
 import '../widgets/player_info_panel.dart';
@@ -22,185 +25,70 @@ class GameScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFF130B2D),
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF2D1B69),
-        foregroundColor: Colors.white,
-        title: const Text('Ludo King HD',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text('LUDO KING HD',
+            style: AppText.display(size: 18, letterSpacing: 1.4)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.replay),
+            icon: const Icon(Icons.replay_rounded),
             tooltip: 'Recommencer',
             onPressed: () => _confirmRestart(context, provider),
           ),
         ],
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF2A1A58), Color(0xFF1B103E), Color(0xFF12092F)],
-            stops: [0.0, 0.56, 1.0],
-          ),
-        ),
+      body: AppBackground(
+        // Pas de halos ici : l'ecran est dense, le plateau doit rester le
+        // point le plus lumineux.
+        showGlows: false,
         child: SafeArea(
           child: Column(
             children: [
-            // ── Joueurs haut : Rouge (0) + Bleu (1) ─────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  for (final p in state.players.take(2))
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        PlayerInfoPanel(
-                          player: p,
-                          isActive:
-                              state.players.indexOf(p) == state.currentPlayerIndex,
-                        ),
-                        const SizedBox(width: 6),
-                        _PlayerMiniDice(
-                          value: state.diceValue,
-                          isActive:
-                              state.players.indexOf(p) == state.currentPlayerIndex,
-                        ),
-                      ],
-                    ),
-                ],
-              ),
-            ),
-
-            // Board
+              _RangeeDeJoueurs(state: state, indices: _hautIndices(state)),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(18),
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Color(0xAA32236F), Color(0xAA1A1244)],
-                      ),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.16),
-                        width: 1.2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.36),
-                          blurRadius: 18,
-                          offset: const Offset(0, 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  // Le plateau est carre : sans ca, le cadre dore s'etirait sur
+                  // toute la hauteur disponible et laissait deux grandes bandes
+                  // vides au-dessus et au-dessous.
+                  child: Center(
+                    child: AspectRatio(
+                      aspectRatio: 1,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(18),
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [Color(0xAA32236F), Color(0xAA1A1244)],
+                          ),
+                          border: Border.all(
+                            color: AppColors.gold.withOpacity(0.30),
+                            width: 1.4,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.40),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.all(6),
-                    child: const ClipRRect(
-                      borderRadius: BorderRadius.all(Radius.circular(14)),
-                      child: LudoBoardWidget(),
+                        padding: const EdgeInsets.all(6),
+                        child: const ClipRRect(
+                          borderRadius: BorderRadius.all(Radius.circular(14)),
+                          child: LudoBoardWidget(),
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ),
-
-            // ── Joueurs bas : Jaune (3) + Vert (2) ──────────────────────
-            if (state.players.length > 2)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    for (final p in state.players.length == 4
-                        ? [state.players[3], state.players[2]]
-                        : state.players.skip(2).toList())
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          PlayerInfoPanel(
-                            player: p,
-                            isActive: state.players.indexOf(p) ==
-                                state.currentPlayerIndex,
-                          ),
-                          const SizedBox(width: 6),
-                          _PlayerMiniDice(
-                            value: state.diceValue,
-                            isActive: state.players.indexOf(p) ==
-                                state.currentPlayerIndex,
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-              ),
-
-            // Message
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 400),
-                child: Text(
-                  state.message ?? '',
-                  key: ValueKey(state.message),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 13,
-                      fontStyle: FontStyle.italic),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 6),
-
-            // Dice + roll button
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  DiceWidget(
-                    value: state.diceValue,
-                    isRolling: provider.diceRolling,
-                    enabled: !state.hasRolled &&
-                        state.phase == GamePhase.rolling &&
-                        state.currentPlayer.type.name == 'human',
-                    onRoll: () => provider.rollDice(),
-                  ),
-                  const SizedBox(width: 20),
-                  if (!state.hasRolled &&
-                      state.phase == GamePhase.rolling &&
-                      state.currentPlayer.type.name == 'human')
-                    ElevatedButton.icon(
-                      onPressed: () => provider.rollDice(),
-                      icon: const Icon(Icons.casino),
-                      label: const Text('Lancer'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF7C4DFF),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 14),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
-                        textStyle: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ).animate().scale(duration: 200.ms),
-                  if (state.phase == GamePhase.choosingPawn)
-                    Text(
-                      'Touchez un pion brillant',
-                      style: TextStyle(
-                          color: Colors.amber.shade300,
-                          fontWeight: FontWeight.bold),
-                    ),
-                ],
-              ),
-            ),
-
+              if (state.players.length > 2)
+                _RangeeDeJoueurs(state: state, indices: _basIndices(state)),
+              _BandeauMessage(message: state.message),
+              _ZoneDe(state: state, provider: provider),
               const SizedBox(height: 8),
             ],
           ),
@@ -208,6 +96,16 @@ class GameScreen extends StatelessWidget {
       ),
     );
   }
+
+  /// Les deux joueurs affichés au-dessus du plateau, puis ceux du dessous.
+  /// L'ordre suit les coins du plateau : rouge et bleu en haut, jaune et vert
+  /// en bas.
+  static List<int> _hautIndices(GameState state) =>
+      [for (var i = 0; i < state.players.length && i < 2; i++) i];
+
+  static List<int> _basIndices(GameState state) => state.players.length == 4
+      ? [3, 2]
+      : [for (var i = 2; i < state.players.length; i++) i];
 
   Future<void> _confirmRestart(
       BuildContext context, GameProvider provider) async {
@@ -233,47 +131,124 @@ class GameScreen extends StatelessWidget {
   }
 }
 
-class _PlayerMiniDice extends StatelessWidget {
-  final int value;
-  final bool isActive;
+/// Une rangée de cartes de joueurs.
+class _RangeeDeJoueurs extends StatelessWidget {
+  final GameState state;
+  final List<int> indices;
 
-  const _PlayerMiniDice({required this.value, required this.isActive});
-
-  static const _glyph = ['?', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+  const _RangeeDeJoueurs({required this.state, required this.indices});
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 220),
-      width: 30,
-      height: 30,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        gradient: const LinearGradient(
-          colors: [Color(0xFFFDFDFD), Color(0xFFD9DCE2)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        border: Border.all(
-          color: isActive ? const Color(0xFFFFC84B) : Colors.white24,
-          width: isActive ? 1.8 : 1.1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.28),
-            blurRadius: 6,
-            offset: const Offset(1, 3),
-          ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          for (final i in indices)
+            PlayerInfoPanel(
+              player: state.players[i],
+              isActive: i == state.currentPlayerIndex,
+              // Le dé ne suit que le joueur dont c'est le tour, et seulement
+              // une fois lancé.
+              diceValue: i == state.currentPlayerIndex && state.hasRolled
+                  ? state.diceValue
+                  : null,
+              // « Vous » n'a de sens que contre l'ordinateur, où une seule
+              // carte est tenue par la personne qui regarde. En multijoueur
+              // local, les quatre l'étaient, ce qui ne distinguait rien.
+              isYou: state.mode == GameMode.vsComputer &&
+                  state.players[i].type == PlayerType.human,
+            ),
         ],
       ),
-      child: Text(
-        _glyph[value.clamp(1, 6)],
-        style: TextStyle(
-          fontSize: 17,
-          color: isActive ? const Color(0xFF171717) : const Color(0xFF3C3C3C),
-          fontWeight: FontWeight.w700,
+    );
+  }
+}
+
+/// La ligne qui dit ce qui vient de se passer.
+class _BandeauMessage extends StatelessWidget {
+  final String? message;
+
+  const _BandeauMessage({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 350),
+        child: Container(
+          key: ValueKey(message),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.30),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withOpacity(0.10)),
+          ),
+          child: Text(
+            message ?? '',
+            textAlign: TextAlign.center,
+            // Blanc plein sur un fond sombre : l'italique gris clair d'avant
+            // se lisait mal sur le dégradé.
+            style: const TextStyle(
+                color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+          ),
         ),
+      ),
+    );
+  }
+}
+
+/// Le dé et son bouton.
+class _ZoneDe extends StatelessWidget {
+  final GameState state;
+  final GameProvider provider;
+
+  const _ZoneDe({required this.state, required this.provider});
+
+  @override
+  Widget build(BuildContext context) {
+    final aLaMain = state.phase == GamePhase.rolling &&
+        !state.hasRolled &&
+        state.currentPlayer.type == PlayerType.human;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          DiceWidget(
+            value: state.diceValue,
+            isRolling: provider.diceRolling,
+            enabled: aLaMain,
+            onRoll: provider.rollDice,
+          ),
+          const SizedBox(width: 18),
+          if (aLaMain)
+            ElevatedButton.icon(
+              onPressed: provider.rollDice,
+              icon: const Icon(Icons.casino_rounded),
+              label: const Text('Lancer'),
+            ).animate().scale(duration: 200.ms)
+          else if (state.phase == GamePhase.choosingPawn)
+            Flexible(
+              child: Text(
+                state.currentPlayer.type == PlayerType.human
+                    ? 'Touche un pion qui brille'
+                    : 'L\'ordinateur réfléchit…',
+                style: const TextStyle(
+                    color: AppColors.goldLight,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14),
+              ),
+            )
+          else if (state.currentPlayer.type == PlayerType.computer)
+            const Text(
+              'Au tour de l\'ordinateur…',
+              style: TextStyle(color: Colors.white60, fontSize: 13),
+            ),
+        ],
       ),
     );
   }
@@ -286,80 +261,117 @@ class GameOverOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<GameProvider>().state;
+    final provider = context.watch<GameProvider>();
+    final state = provider.state;
     if (state == null || state.phase != GamePhase.gameOver) {
       return const SizedBox.shrink();
     }
 
-    final winner = state.players[state.winnerIndex!];
+    final gagnant = state.players[state.winnerIndex!];
+    final classement = state.players.where((p) => p.finishRank > 0).toList()
+      ..sort((a, b) => a.finishRank.compareTo(b.finishRank));
 
     return Container(
-      color: Colors.black54,
+      color: Colors.black.withOpacity(0.72),
       child: Center(
-        child: Container(
-          margin: const EdgeInsets.all(32),
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: const Color(0xFF2D1B69),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: winner.color.color, width: 3),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('🏆',
-                  style: TextStyle(fontSize: 56))
-                  .animate()
-                  .scale(duration: 600.ms, curve: Curves.elasticOut),
-              const SizedBox(height: 12),
-              Text(
-                '${winner.color.name} gagne !',
-                style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: winner.color.color),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 380),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(24, 22, 24, 20),
+              decoration: goldFrame(
+                gradient: const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [AppColors.surface, AppColors.surfaceLow],
+                ),
+                radius: 24,
+                borderWidth: 2.5,
+                glow: 24,
               ),
-              const SizedBox(height: 8),
-              // Rankings
-              ...(() {
-                final ranked = state.players
-                    .where((p) => p.finishRank > 0)
-                    .toList()
-                  ..sort((a, b) => a.finishRank.compareTo(b.finishRank));
-                return ranked
-                    .map((p) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 2),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text('${p.finishRank}. ',
-                                  style: const TextStyle(color: Colors.white70)),
-                              Container(
-                                  width: 12,
-                                  height: 12,
-                                  decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: p.color.color)),
-                              const SizedBox(width: 6),
-                              Text(p.color.name,
-                                  style: const TextStyle(color: Colors.white)),
-                            ],
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('🏆', style: TextStyle(fontSize: 56))
+                      .animate()
+                      .scale(duration: 600.ms, curve: Curves.elasticOut),
+                  const SizedBox(height: 10),
+                  Text(
+                    '${gagnant.color.name} gagne !',
+                    textAlign: TextAlign.center,
+                    style:
+                        AppText.display(size: 26, color: gagnant.color.color),
+                  ),
+                  if (classement.length > 1) ...[
+                    const SizedBox(height: 16),
+                    for (final p in classement)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 3),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 26,
+                              child: Text('${p.finishRank}.',
+                                  style: const TextStyle(
+                                      color: Colors.white54,
+                                      fontWeight: FontWeight.bold)),
+                            ),
+                            Container(
+                              width: 14,
+                              height: 14,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: p.color.color,
+                                border:
+                                    Border.all(color: Colors.white24, width: 1),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(p.color.name, style: AppText.body),
+                          ],
+                        ),
+                      ),
+                  ],
+                  const SizedBox(height: 22),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            provider.reset();
+                            Navigator.of(context).pop();
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white70,
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            side: const BorderSide(color: Colors.white24),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14)),
                           ),
-                        ))
-                    .toList();
-              })(),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  context.read<GameProvider>().reset();
-                  Navigator.of(context).pop();
-                },
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: winner.color.color,
-                    foregroundColor: Colors.white),
-                child: const Text('Menu principal'),
+                          child: const Text('Menu'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          // Rejouer relance la même configuration : même mode,
+                          // mêmes couleurs, dans le même ordre.
+                          onPressed: () => provider.startGame(
+                            state.mode,
+                            state.players.map((p) => p.color).toList(),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: gagnant.color.color,
+                              foregroundColor: Colors.white),
+                          child: const Text('Rejouer'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

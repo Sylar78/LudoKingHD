@@ -74,6 +74,7 @@ class GameEngine {
     if (homePos > 105) return null; // overshoot
     return homePos;
   }
+
   /// Returns every position the [pawn] passes through (inclusive of final)
   /// when [dice] is rolled. Used for step-by-step hop animation.
   static List<int> computeMovePath(Pawn pawn, int dice) {
@@ -96,7 +97,9 @@ class GameEngine {
     final remaining = stepsToHomeEntry(pawn);
     if (remaining <= 0) {
       final result = <int>[];
-      for (int i = 1; i <= dice && 100 + i <= 105; i++) result.add(100 + i);
+      for (int i = 1; i <= dice && 100 + i <= 105; i++) {
+        result.add(100 + i);
+      }
       return result;
     }
 
@@ -124,21 +127,14 @@ class GameEngine {
   /// those pawns are sent back to base.
   ///
   /// Returns a record list describing captured pawns for UI animation.
-  static List<({
-    int playerIdx,
-    int pawnIdx,
-    PlayerColor color,
-    int fromPosition
-  })> resolveCaptures(Pawn pawn, GameState state) {
+  static List<
+          ({int playerIdx, int pawnIdx, PlayerColor color, int fromPosition})>
+      resolveCaptures(Pawn pawn, GameState state) {
     if (!pawn.isOnOuterPath) return [];
     if (safeZones.contains(pawn.position)) return [];
 
-    final captured = <({
-      int playerIdx,
-      int pawnIdx,
-      PlayerColor color,
-      int fromPosition
-    })>[];
+    final captured =
+        <({int playerIdx, int pawnIdx, PlayerColor color, int fromPosition})>[];
 
     for (int pi = 0; pi < state.players.length; pi++) {
       final player = state.players[pi];
@@ -162,8 +158,8 @@ class GameEngine {
 
   /// Returns true if the square [pos] is blocked by two or more pawns of
   /// another player (a block that cannot be passed or captured).
-  static bool isBlockedByOpponent(int pos, PlayerColor moverColor,
-      GameState state) {
+  static bool isBlockedByOpponent(
+      int pos, PlayerColor moverColor, GameState state) {
     if (pos < 0 || pos > 51) return false; // only on outer path
     for (final player in state.players) {
       if (player.color == moverColor) continue;
@@ -184,7 +180,8 @@ class GameEngine {
       final newPos = computeNewPosition(pawn, dice);
       if (newPos == null) continue;
       // Check block
-      if (newPos >= 0 && newPos <= 51 &&
+      if (newPos >= 0 &&
+          newPos <= 51 &&
           isBlockedByOpponent(newPos, player.color, state)) {
         continue;
       }
@@ -197,9 +194,7 @@ class GameEngine {
 
   /// Returns true if the player earns an extra roll after this move.
   static bool earnsExtraRoll(
-      {required int dice,
-      required bool captured,
-      required bool reachedHome}) {
+      {required int dice, required bool captured, required bool reachedHome}) {
     return dice == 6 || captured || reachedHome;
   }
 
@@ -207,8 +202,7 @@ class GameEngine {
   static int nextPlayerIndex(GameState state) {
     int next = (state.currentPlayerIndex + 1) % state.players.length;
     int tries = 0;
-    while (state.players[next].hasFinished &&
-        tries < state.players.length) {
+    while (state.players[next].hasFinished && tries < state.players.length) {
       next = (next + 1) % state.players.length;
       tries++;
     }

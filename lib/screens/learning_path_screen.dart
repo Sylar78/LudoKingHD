@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/learning_provider.dart';
+import '../widgets/app_background.dart';
 import 'lesson_screen.dart';
 
 class LearningPathScreen extends StatelessWidget {
@@ -11,10 +12,8 @@ class LearningPathScreen extends StatelessWidget {
     final lp = context.watch<LearningProvider>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1035),
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF2D1B69),
-        foregroundColor: Colors.white,
         title: const Text('Apprendre à jouer'),
         actions: [
           TextButton(
@@ -24,47 +23,49 @@ class LearningPathScreen extends StatelessWidget {
           )
         ],
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            _ProgressHeader(lp: lp),
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: lp.lessons.length,
-                itemBuilder: (context, index) {
-                  final lesson = lp.lessons[index];
-                  final unlocked = lp.isUnlocked(lesson.id);
-                  final completed = lp.isCompleted(lesson.id);
+      body: AppBackground(
+        showGlows: false,
+        child: SafeArea(
+          child: Column(
+            children: [
+              _ProgressHeader(lp: lp),
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: lp.lessons.length,
+                  itemBuilder: (context, index) {
+                    final lesson = lp.lessons[index];
+                    final unlocked = lp.isUnlocked(lesson.id);
+                    final completed = lp.isCompleted(lesson.id);
 
-                  return _LessonTile(
-                    lesson: lesson,
-                    unlocked: unlocked,
-                    completed: completed,
-                    index: index,
-                    onTap: unlocked
-                        ? () {
-                            lp.setCurrentLesson(lesson.id);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) =>
-                                      LessonScreen(lessonId: lesson.id)),
-                            );
-                          }
-                        : null,
-                  );
-                },
+                    return _LessonTile(
+                      lesson: lesson,
+                      unlocked: unlocked,
+                      completed: completed,
+                      index: index,
+                      onTap: unlocked
+                          ? () {
+                              lp.setCurrentLesson(lesson.id);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) =>
+                                        LessonScreen(lessonId: lesson.id)),
+                              );
+                            }
+                          : null,
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Future<void> _confirmReset(
-      BuildContext context, LearningProvider lp) async {
+  Future<void> _confirmReset(BuildContext context, LearningProvider lp) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -118,8 +119,7 @@ class _ProgressHeader extends StatelessWidget {
               value: pct,
               minHeight: 8,
               backgroundColor: Colors.white24,
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(Colors.amber),
+              valueColor: const AlwaysStoppedAnimation<Color>(Colors.amber),
             ),
           ),
         ],
@@ -153,8 +153,7 @@ class _LessonTile extends StatelessWidget {
           Column(
             children: [
               if (index > 0)
-                Container(
-                    width: 2, height: 12, color: Colors.white24),
+                Container(width: 2, height: 12, color: Colors.white24),
               Container(
                 width: 36,
                 height: 36,
@@ -176,8 +175,7 @@ class _LessonTile extends StatelessWidget {
                               style: const TextStyle(fontSize: 16)),
                 ),
               ),
-              Container(
-                  width: 2, height: 12, color: Colors.white24),
+              Container(width: 2, height: 12, color: Colors.white24),
             ],
           ),
           const SizedBox(width: 12),
@@ -186,8 +184,8 @@ class _LessonTile extends StatelessWidget {
               onTap: onTap,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: completed
                       ? Colors.green.withOpacity(0.15)
@@ -206,8 +204,7 @@ class _LessonTile extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Text(lesson.icon,
-                        style: const TextStyle(fontSize: 24)),
+                    Text(lesson.icon, style: const TextStyle(fontSize: 24)),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../widgets/app_background.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -7,30 +8,27 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1035),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF2D1B69),
-        foregroundColor: Colors.white,
-        title: const Text('Paramètres'),
-      ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: const [
-            _SettingsCard(
-              icon: Icons.volume_up,
-              title: 'Sons',
-              subtitle: 'Effets sonores du jeu',
-              trailing: _SoundToggle(),
-            ),
-            SizedBox(height: 12),
-            _SettingsCard(
-              icon: Icons.info_outline,
-              title: 'À propos',
-              subtitle:
-                  'Ludo King HD v1.0.0\nJeu de plateau Ludo en Flutter',
-            ),
-          ],
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(title: const Text('Paramètres')),
+      body: AppBackground(
+        child: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.all(20),
+            children: const [
+              _SettingsCard(
+                icon: Icons.volume_up,
+                title: 'Sons',
+                subtitle: 'Effets sonores du jeu',
+                trailing: _SoundToggle(),
+              ),
+              SizedBox(height: 12),
+              _SettingsCard(
+                icon: Icons.info_outline,
+                title: 'À propos',
+                subtitle: 'Jeu de plateau Ludo, écrit en Flutter.',
+              ),
+            ],
+          ),
         ),
       ),
     );
