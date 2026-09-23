@@ -3,8 +3,7 @@ class LessonStep {
   final String body;
   final String? imageName; // optional asset illustration
 
-  const LessonStep(
-      {required this.title, required this.body, this.imageName});
+  const LessonStep({required this.title, required this.body, this.imageName});
 }
 
 class Lesson {

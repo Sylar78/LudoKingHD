@@ -57,11 +57,10 @@ class _DiceWidgetState extends State<DiceWidget>
     final enabled = widget.enabled && !widget.isRolling;
     final shadowPulse = Curves.easeInOut.transform(_shadowCtrl.value);
     final double dynamicBlur =
-      widget.isRolling ? 10.0 + shadowPulse * 12.0 : 14.0;
-    final double dynamicY =
-      widget.isRolling ? 4.0 + shadowPulse * 8.0 : 8.0;
+        widget.isRolling ? 10.0 + shadowPulse * 12.0 : 14.0;
+    final double dynamicY = widget.isRolling ? 4.0 + shadowPulse * 8.0 : 8.0;
     final double dynamicSpread =
-      widget.isRolling ? -1.5 + shadowPulse * 0.5 : 0.0;
+        widget.isRolling ? -1.5 + shadowPulse * 0.5 : 0.0;
 
     return GestureDetector(
       onTap: enabled ? widget.onRoll : null,
@@ -90,7 +89,7 @@ class _DiceWidgetState extends State<DiceWidget>
                 color: const Color(0xFFFFD34F).withOpacity(0.25),
                 blurRadius: 14,
                 spreadRadius: 1,
-            ),
+              ),
           ],
           border: Border.all(
             color: enabled ? const Color(0xFFFFC840) : const Color(0xFF9A9A9A),
@@ -126,9 +125,7 @@ class _DiceWidgetState extends State<DiceWidget>
             ),
           ],
         ),
-      )
-          .animate(target: widget.isRolling ? 1 : 0)
-          .shake(hz: 9, rotation: 0.0),
+      ).animate(target: widget.isRolling ? 1 : 0).shake(hz: 9, rotation: 0.0),
     );
   }
 }
@@ -165,8 +162,7 @@ class _RollingDiceState extends State<_RollingDice>
   }
 
   @override
-  Widget build(BuildContext context) =>
-      Center(child: _DiceFace(value: _val));
+  Widget build(BuildContext context) => Center(child: _DiceFace(value: _val));
 }
 
 class _DiceFace extends StatelessWidget {
@@ -175,12 +171,36 @@ class _DiceFace extends StatelessWidget {
 
   // Standard dice 3×3 grid layout – false = invisible dot (transparent placeholder)
   static const _dots = {
-    1: [[false, false, false], [false, true,  false], [false, false, false]],
-    2: [[true,  false, false], [false, false, false], [false, false, true ]],
-    3: [[true,  false, false], [false, true,  false], [false, false, true ]],
-    4: [[true,  false, true ], [false, false, false], [true,  false, true ]],
-    5: [[true,  false, true ], [false, true,  false], [true,  false, true ]],
-    6: [[true,  false, true ], [true,  false, true ], [true,  false, true ]],
+    1: [
+      [false, false, false],
+      [false, true, false],
+      [false, false, false]
+    ],
+    2: [
+      [true, false, false],
+      [false, false, false],
+      [false, false, true]
+    ],
+    3: [
+      [true, false, false],
+      [false, true, false],
+      [false, false, true]
+    ],
+    4: [
+      [true, false, true],
+      [false, false, false],
+      [true, false, true]
+    ],
+    5: [
+      [true, false, true],
+      [false, true, false],
+      [true, false, true]
+    ],
+    6: [
+      [true, false, true],
+      [true, false, true],
+      [true, false, true]
+    ],
   };
 
   @override

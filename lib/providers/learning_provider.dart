@@ -18,8 +18,7 @@ class LearningProvider extends ChangeNotifier {
     return _completedLessonIds.contains(lessonId - 1);
   }
 
-  bool isCompleted(int lessonId) =>
-      _completedLessonIds.contains(lessonId);
+  bool isCompleted(int lessonId) => _completedLessonIds.contains(lessonId);
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();

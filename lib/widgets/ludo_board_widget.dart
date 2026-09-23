@@ -15,7 +15,7 @@ class LudoBoardWidget extends StatefulWidget {
 }
 
 class _LudoBoardWidgetState extends State<LudoBoardWidget>
-  with TickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _ctrl;
   late AnimationController _captureCtrl;
   GameProvider? _provider;
@@ -131,8 +131,7 @@ class _LudoBoardWidgetState extends State<LudoBoardWidget>
     );
   }
 
-  void _handleTap(
-      TapUpDetails details, BuildContext context, GameState state) {
+  void _handleTap(TapUpDetails details, BuildContext context, GameState state) {
     if (state.phase != GamePhase.choosingPawn) return;
     final provider = context.read<GameProvider>();
     final boxSize = (context.findRenderObject() as RenderBox).size;

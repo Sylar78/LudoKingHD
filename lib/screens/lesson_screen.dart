@@ -132,8 +132,8 @@ class _LessonScreenState extends State<LessonScreen> {
                     icon: Icon(_stepIndex == total - 1
                         ? Icons.check_circle
                         : Icons.arrow_forward),
-                    label: Text(
-                        _stepIndex == total - 1 ? 'Terminer' : 'Suivant'),
+                    label:
+                        Text(_stepIndex == total - 1 ? 'Terminer' : 'Suivant'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _stepIndex == total - 1
                           ? Colors.green
@@ -176,8 +176,7 @@ class _StepCard extends StatelessWidget {
             color: const Color(0xFF7C4DFF).withOpacity(0.4), width: 1.5),
         boxShadow: [
           BoxShadow(
-              color: const Color(0xFF7C4DFF).withOpacity(0.2),
-              blurRadius: 20)
+              color: const Color(0xFF7C4DFF).withOpacity(0.2), blurRadius: 20)
         ],
       ),
       child: SingleChildScrollView(
@@ -185,8 +184,7 @@ class _StepCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(lesson.icon,
-                style: const TextStyle(fontSize: 40)),
+            Text(lesson.icon, style: const TextStyle(fontSize: 40)),
             const SizedBox(height: 16),
             Text(
               step.title,
@@ -206,9 +204,7 @@ class _StepCard extends StatelessWidget {
             Text(
               step.body,
               style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 16,
-                  height: 1.6),
+                  color: Colors.white70, fontSize: 16, height: 1.6),
             ),
           ],
         ),
@@ -225,8 +221,7 @@ class _CompletionDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: const Color(0xFF2D1B69),
-      shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Padding(
         padding: const EdgeInsets.all(28),
         child: Column(
@@ -247,8 +242,7 @@ class _CompletionDialog extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               '${lesson.icon} ${lesson.title}',
-              style:
-                  const TextStyle(color: Colors.amber, fontSize: 16),
+              style: const TextStyle(color: Colors.amber, fontSize: 16),
             ),
             const SizedBox(height: 20),
             Row(
