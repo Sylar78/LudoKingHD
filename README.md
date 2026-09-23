@@ -1,16 +1,37 @@
-# ludo_king_hd
+# Ludo King HD
 
-A new Flutter project.
+Jeu de ludo en Flutter : parties contre l'ordinateur, plateau dessiné au
+`CustomPainter`, et un parcours d'apprentissage des règles.
 
-## Getting Started
+## Démarrer
 
-This project is a starting point for a Flutter application.
+```
+flutter pub get
+flutter run
+```
 
-A few resources to get you started if this is your first Flutter project:
+## Vérifier avant de pousser
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+```
+flutter analyze --no-fatal-infos
+flutter test
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Les deux sont rejoués par les workflows de publication, qui refusent de
+déposer quoi que ce soit s'ils échouent.
+
+## Publier
+
+Voir [docs/publication.md](docs/publication.md) pour les valeurs propres à ce
+dépôt, et [docs/publier-une-app-flutter.md](docs/publier-une-app-flutter.md)
+pour la marche à suivre complète sur Google Play et l'App Store.
+
+## Organisation
+
+- `lib/models/` — pions, joueurs, couleurs, état de partie
+- `lib/utils/game_engine.dart` — les règles : sortie sur un 6, compte exact
+  pour le centre, prises
+- `lib/utils/board_layout.dart` — position d'une case sur la grille 15×15
+- `lib/widgets/` — plateau, dé, panneaux de joueur
+- `lib/screens/` — menu, partie, apprentissage, réglages
+- `test/` — tests des règles, sans widget
