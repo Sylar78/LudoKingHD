@@ -4,6 +4,7 @@ import '../models/board_constants.dart';
 import '../models/game_state.dart';
 import '../models/move_info.dart';
 import '../models/pawn.dart';
+import 'pawn_figures.dart';
 import '../models/player_color.dart';
 import '../utils/board_layout.dart';
 
@@ -466,8 +467,11 @@ class LudoBoardPainter extends CustomPainter {
       );
       final cx = off.$1 + stack.$1;
       final cy = off.$2 + stack.$2;
-      _drawChessPawn(
-          canvas, cx, cy + cellSize * 0.32, cellSize, p.color.color, false);
+      paintAnimalPawn(canvas,
+          cx: cx,
+          baseY: cy + cellSize * 0.32,
+          cellSize: cellSize,
+          color: p.color);
     }
   }
 
@@ -515,7 +519,8 @@ class LudoBoardPainter extends CustomPainter {
       final cx = from.$1 + (to.$1 - from.$1) * t;
       final cy = from.$2 + (to.$2 - from.$2) * t;
       final bottomY = cy + cellSize * 0.32;
-      _drawChessPawn(canvas, cx, bottomY, cellSize, p.color.color, false);
+      paintAnimalPawn(canvas,
+          cx: cx, baseY: bottomY, cellSize: cellSize, color: p.color);
     }
   }
 
@@ -544,8 +549,11 @@ class LudoBoardPainter extends CustomPainter {
     final cy = from.$2 + (to.$2 - from.$2) * t;
     final hop = cellSize * 0.85 * math.sin(math.pi * t); // hop height per step
 
-    _drawChessPawn(canvas, cx, cy - hop + cellSize * 0.33, cellSize,
-        pawn.color.color, false);
+    paintAnimalPawn(canvas,
+        cx: cx,
+        baseY: cy - hop + cellSize * 0.33,
+        cellSize: cellSize,
+        color: pawn.color);
   }
 
   (double, double) _resolveOffset(
@@ -583,7 +591,12 @@ class LudoBoardPainter extends CustomPainter {
 
     // Vertical centre of the cell → pawn base sits slightly below centre
     final bottomY = cy + cellSize * 0.32;
-    _drawChessPawn(canvas, cx, bottomY, cellSize, pawn.color.color, isMovable);
+    paintAnimalPawn(canvas,
+        cx: cx,
+        baseY: bottomY,
+        cellSize: cellSize,
+        color: pawn.color,
+        isMovable: isMovable);
   }
 
   (double, double) _stackOffsetForPosition(
@@ -657,114 +670,6 @@ class LudoBoardPainter extends CustomPainter {
 
     final chosen = positions[selfIndex.clamp(0, positions.length - 1)];
     return chosen;
-  }
-
-  // ── 3D Isometric Chess Pawn with collar ─────────────────────────────────
-  void _drawChessPawn(Canvas canvas, double cx, double baseY, double cellSize,
-      Color color, bool isMovable) {
-    const pawnScale = 1.5;
-    final cLight = Color.lerp(color, Colors.white, 0.58)!;
-    final cLight2 = Color.lerp(color, Colors.white, 0.28)!;
-    final cDark = Color.lerp(color, Colors.black, 0.52)!;
-
-    final headR = cellSize * 0.33 * pawnScale;
-    final ringR = cellSize * 0.18 * pawnScale;
-    final tipY = baseY - cellSize * 0.02 * pawnScale;
-    final centerY = tipY - headR * 1.06;
-
-    // Drop shadow under the pin.
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(cx + 2.2 * pawnScale, tipY + 5.5 * pawnScale),
-        width: cellSize * 0.66 * pawnScale,
-        height: cellSize * 0.24 * pawnScale,
-      ),
-      Paint()
-        ..color = Colors.black.withOpacity(0.42)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5 * pawnScale),
-    );
-
-    // Cartoon map-pin silhouette.
-    final pin = Path()
-      ..moveTo(cx, tipY)
-      ..quadraticBezierTo(cx - headR * 1.12, centerY + headR * 0.45,
-          cx - headR * 0.80, centerY - headR * 0.12)
-      ..arcTo(Rect.fromCircle(center: Offset(cx, centerY), radius: headR),
-          math.pi * 1.12, math.pi * 1.76, false)
-      ..quadraticBezierTo(cx + headR * 1.12, centerY + headR * 0.45, cx, tipY)
-      ..close();
-
-    final pinRect = Rect.fromLTWH(
-      cx - headR * 1.14,
-      centerY - headR * 1.15,
-      headR * 2.28,
-      tipY - (centerY - headR * 1.15),
-    );
-    canvas.drawPath(
-      pin,
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [cLight, color, cDark],
-          stops: const [0.0, 0.48, 1.0],
-        ).createShader(pinRect),
-    );
-    canvas.drawPath(
-      pin,
-      Paint()
-        ..color = Colors.white.withOpacity(0.50)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0,
-    );
-
-    // Inner ring for the map-pin look.
-    final ringRect =
-        Rect.fromCircle(center: Offset(cx, centerY), radius: ringR);
-    canvas.drawCircle(
-      Offset(cx, centerY),
-      ringR,
-      Paint()
-        ..shader = RadialGradient(
-          colors: [cDark, Colors.black.withOpacity(0.65)],
-        ).createShader(ringRect),
-    );
-    canvas.drawCircle(
-      Offset(cx, centerY),
-      ringR * 0.62,
-      Paint()
-        ..shader = RadialGradient(
-          colors: [Colors.white.withOpacity(0.9), cLight2],
-        ).createShader(
-            Rect.fromCircle(center: Offset(cx, centerY), radius: ringR * 0.62)),
-    );
-
-    // Specular highlight.
-    canvas.drawCircle(
-      Offset(cx - headR * 0.36, centerY - headR * 0.42),
-      headR * 0.22,
-      Paint()..color = Colors.white.withOpacity(0.74),
-    );
-
-    // 9. Movable glow rings
-    if (isMovable) {
-      canvas.drawCircle(
-        Offset(cx, centerY),
-        headR + 6 * pawnScale,
-        Paint()
-          ..color = Colors.amber
-          ..strokeWidth = 2.5
-          ..style = PaintingStyle.stroke,
-      );
-      canvas.drawCircle(
-        Offset(cx, centerY),
-        headR + 10 * pawnScale,
-        Paint()
-          ..color = Colors.white.withOpacity(0.55)
-          ..strokeWidth = 1.5
-          ..style = PaintingStyle.stroke,
-      );
-    }
   }
 
   @override

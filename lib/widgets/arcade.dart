@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/player_color.dart';
 import '../theme/app_theme.dart';
+import 'pawn_figures.dart';
 
 /// Les briques du style « arcade » : cadre bleu à liseré doré, gros boutons,
 /// pastilles de couleur.
@@ -195,7 +196,8 @@ class ArcadeRoundButton extends StatelessWidget {
   }
 }
 
-/// Le pion planté au-dessus d'un choix de couleur.
+/// Le pion planté au-dessus d'un choix de couleur : l'animal de cette
+/// couleur, celui que la personne verra sur le plateau.
 class ColorPin extends StatelessWidget {
   final PlayerColor color;
   final bool raised;
@@ -207,34 +209,8 @@ class ColorPin extends StatelessWidget {
     return AnimatedSlide(
       duration: const Duration(milliseconds: 220),
       curve: Curves.easeOutBack,
-      offset: Offset(0, raised ? -0.12 : 0),
-      child: SizedBox(
-        width: 50,
-        height: 58,
-        child: Stack(
-          alignment: Alignment.topCenter,
-          children: [
-            const Icon(
-              Icons.place,
-              size: 56,
-              color: Colors.white,
-              shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
-            ),
-            Positioned(
-              top: 10,
-              child: Container(
-                width: 26,
-                height: 26,
-                decoration: BoxDecoration(
-                  color: color.color,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.black26, width: 1.5),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+      offset: Offset(0, raised ? -0.14 : 0),
+      child: AnimalFigure(color: color, size: 56),
     );
   }
 }

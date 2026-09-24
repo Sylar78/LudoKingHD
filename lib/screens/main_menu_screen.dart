@@ -8,6 +8,7 @@ import '../providers/game_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_background.dart';
 import '../widgets/arcade.dart';
+import '../widgets/pawn_figures.dart';
 
 class MainMenuScreen extends StatelessWidget {
   const MainMenuScreen({super.key});
@@ -370,8 +371,11 @@ class _ChoixCouleurDialogState extends State<_ChoixCouleurDialog> {
             ),
             const SizedBox(height: 10),
             Text(
-              _selection.name,
-              style: AppText.display(size: 18, color: AppColors.goldLight),
+              // La couleur et l'animal qui va avec : c'est la figurine que la
+              // personne verra sur le plateau.
+              '${speciesLabel(speciesFor(_selection)).toUpperCase()} · '
+              '${_selection.name.toUpperCase()}',
+              style: AppText.display(size: 17, color: AppColors.goldLight),
             ),
             const SizedBox(height: 18),
             Row(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/player.dart';
 import '../models/player_color.dart';
 import '../theme/app_theme.dart';
+import 'pawn_figures.dart';
 
 /// La carte d'un joueur, à côté du plateau.
 ///
@@ -158,12 +159,16 @@ class _Avatar extends StatelessWidget {
         Container(
           width: 40,
           height: 40,
+          padding: const EdgeInsets.all(2),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: RadialGradient(
-              colors: [color.lightColor, color.color.withOpacity(0.65)],
+              colors: [
+                color.lightColor.withOpacity(0.55),
+                color.color.withOpacity(0.18),
+              ],
             ),
-            border: Border.all(color: color.color, width: 2.2),
+            border: Border.all(color: color.color, width: 2),
             boxShadow: [
               BoxShadow(
                   color: color.color.withOpacity(0.35),
@@ -171,8 +176,9 @@ class _Avatar extends StatelessWidget {
                   spreadRadius: 0.5),
             ],
           ),
-          child:
-              Icon(Icons.location_on_rounded, size: 25, color: color.darkColor),
+          // Le pion du joueur, le meme que sur le plateau, plutot qu'une
+          // punaise generique identique pour les quatre couleurs.
+          child: AnimalFigure(color: color, size: 30),
         ),
         if (isActive)
           Container(

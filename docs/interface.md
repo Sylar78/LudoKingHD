@@ -38,6 +38,47 @@ Les captures viennent de la version web (`flutter build web --web-renderer
 html`), prise à 380 × 814. La police d'affichage y est celle de repli,
 faute de réseau au moment de la capture.
 
+## Les pions
+
+Les pions sont des figurines d'animaux, une par couleur : **renard** en
+rouge, **hibou** en bleu, **grenouille** en vert, **poussin** en jaune. Elles
+sont choisies pour que la silhouette suffise à reconnaître un pion à la
+taille d'une case, sans compter sur la couleur seule — ce qui aide aussi
+quand on distingue mal le rouge du vert.
+
+![](captures/pions-animaux.png)
+
+Le même animal sert sur le plateau, sur la carte du joueur et au moment de
+choisir sa couleur, pour qu'on sache d'avance ce qu'on va voir sur le
+plateau :
+
+![](captures/choix-animal.png)
+
+Tout est dans `lib/widgets/pawn_figures.dart`. `paintAnimalPawn` dessine une
+figurine sur un `Canvas` ; `AnimalFigure` est le widget qui en met une dans
+une boîte, hors du plateau.
+
+### Pourquoi ce ne sont pas de vrais modèles 3D
+
+Le relief vient des dégradés, de l'ombre portée et du reflet : c'est une
+figurine peinte, comme une figurine en résine photographiée de face, pas un
+maillage éclairé en temps réel. Charger de vrais modèles demanderait un
+paquet de rendu 3D, des fichiers `.glb` versionnés dans le dépôt, et une
+surface de rendu par pion — seize sur un plateau de téléphone. Le jeu y
+perdrait en fluidité et en poids d'installation plus qu'il n'y gagnerait en
+allure.
+
+Si l'envie revient, le point d'entrée est propre : seul `paintAnimalPawn` sait
+à quoi ressemble un pion, et les quatre endroits du plateau qui dessinent un
+pion passent tous par lui.
+
+### Ajouter ou changer un animal
+
+Une valeur dans `AnimalSpecies`, son nom dans `speciesLabel`, sa couleur dans
+`speciesFor`, et ce qui dépasse du corps dans `_paintBehind`, le reste dans
+`_paintFront`. Un test vérifie que chaque couleur a son animal et que deux
+couleurs n'en partagent jamais un.
+
 ## Ce qui a été corrigé en même temps
 
 - Chaque joueur affichait une cagnotte en pièces, tirée d'une constante par
