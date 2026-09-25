@@ -7,6 +7,7 @@ import '../models/player_color.dart';
 import '../providers/game_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_background.dart';
+import '../widgets/board3d/ludo_board_3d.dart';
 import '../widgets/dice_widget.dart';
 import '../widgets/ludo_board_widget.dart';
 import '../widgets/player_info_panel.dart';
@@ -76,9 +77,14 @@ class GameScreen extends StatelessWidget {
                           ],
                         ),
                         padding: const EdgeInsets.all(6),
-                        child: const ClipRRect(
-                          borderRadius: BorderRadius.all(Radius.circular(14)),
-                          child: LudoBoardWidget(),
+                        child: ClipRRect(
+                          borderRadius:
+                              const BorderRadius.all(Radius.circular(14)),
+                          // En 3D sur mobile ; le plateau 2D reste la
+                          // solution de repli (web, bureau, WebGL absent).
+                          child: LudoBoard3D.isSupported
+                              ? const LudoBoard3D()
+                              : const LudoBoardWidget(),
                         ),
                       ),
                     ),

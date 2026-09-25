@@ -49,3 +49,6 @@ android/upload-keystore.jks
 *.keystore
 *.p12
 *.mobileprovision
+
+# Scene 3D : dependances npm, reinstallees par `npm install` dans board3d/
+board3d/node_modules/
