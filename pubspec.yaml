@@ -44,6 +44,8 @@ dependencies:
   google_fonts: ^6.2.1
   # Utilities
   uuid: ^4.4.0
+  # Plateau 3D : la scene Three.js tourne dans une WebView (voir board3d/)
+  webview_flutter: ^4.10.0
 
 dev_dependencies:
   flutter_test:
@@ -64,9 +66,9 @@ flutter:
 
   uses-material-design: true
 
-  # Pas de section `assets:` tant qu'il n'y a pas de fichier a declarer :
-  # un dossier annonce mais absent est un avertissement d'analyse, et
-  # l'analyse est bloquante dans les workflows de publication.
+  # La scene 3D du plateau, compilee depuis board3d/ par `npm run build`.
+  assets:
+    - assets/board3d/index.html
 
   # To add assets to your application, add an assets section, like this:
   # assets:
