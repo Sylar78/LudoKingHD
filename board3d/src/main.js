@@ -29,7 +29,11 @@ try {
   send({ type: 'error', message: String(e) });
   throw e;
 }
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+// Beaucoup de téléphones sont à 3x : plafonner à 2 rendait la scène visiblement
+// moins nette sur ces écrans-là (les bords des tuiles et les figurines
+// paraissaient crénelés). Toujours plafonné pour ne pas payer 4x sur les rares
+// écrans au-delà.
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 3));
 renderer.setClearColor(0x000000, 0);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;

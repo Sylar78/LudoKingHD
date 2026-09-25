@@ -87,12 +87,13 @@ class GameProvider extends ChangeNotifier {
     }
 
     // Human QoL: auto-play only when there is exactly one pawn in play
-    // (others still in base) and exactly one legal move.
-    final pawnsOutOfBase =
-        s.currentPlayer.pawns.where((p) => !p.isInBase).length;
+    // (others still in base, or already home) and exactly one legal move.
+    final pawnsInPlay = s.currentPlayer.pawns
+        .where((p) => !p.isInBase && !p.isHome)
+        .length;
     if (s.currentPlayer.type == PlayerType.human &&
         movable.length == 1 &&
-        pawnsOutOfBase <= 1) {
+        pawnsInPlay <= 1) {
       s.movablePawnIndices = movable;
       s.phase = GamePhase.choosingPawn;
       s.message =

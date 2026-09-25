@@ -12,8 +12,17 @@ import '../widgets/dice_widget.dart';
 import '../widgets/ludo_board_widget.dart';
 import '../widgets/player_info_panel.dart';
 
-class GameScreen extends StatelessWidget {
+class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
+
+  @override
+  State<GameScreen> createState() => _GameScreenState();
+}
+
+class _GameScreenState extends State<GameScreen> {
+  // Le 3D est le rendu par défaut là où il est disponible ; ce bouton laisse
+  // basculer sur le plateau 2D, plus léger, sans changer la logique du jeu.
+  bool _use3D = LudoBoard3D.isSupported;
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +40,12 @@ class GameScreen extends StatelessWidget {
         title: Text('LUDO KING HD',
             style: AppText.display(size: 18, letterSpacing: 1.4)),
         actions: [
+          if (LudoBoard3D.isSupported)
+            IconButton(
+              icon: Icon(_use3D ? Icons.view_in_ar_rounded : Icons.grid_view_rounded),
+              tooltip: _use3D ? 'Passer au plateau 2D' : 'Passer au plateau 3D',
+              onPressed: () => setState(() => _use3D = !_use3D),
+            ),
           IconButton(
             icon: const Icon(Icons.replay_rounded),
             tooltip: 'Recommencer',
@@ -80,9 +95,10 @@ class GameScreen extends StatelessWidget {
                         child: ClipRRect(
                           borderRadius:
                               const BorderRadius.all(Radius.circular(14)),
-                          // En 3D sur mobile ; le plateau 2D reste la
-                          // solution de repli (web, bureau, WebGL absent).
-                          child: LudoBoard3D.isSupported
+                          // En 3D sur mobile par défaut ; le plateau 2D reste
+                          // la solution de repli (web, bureau, WebGL absent)
+                          // et peut aussi être choisi à la main.
+                          child: _use3D
                               ? const LudoBoard3D()
                               : const LudoBoardWidget(),
                         ),

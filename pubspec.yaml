@@ -57,6 +57,16 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^4.0.0
+  # Régénère les icônes Android/iOS à partir d'une seule image source.
+  flutter_launcher_icons: ^0.14.1
+
+# Icône de l'app : générée par `dart run flutter_launcher_icons` depuis
+# assets/icon/app_icon.png (voir test/_generate_icon.dart pour la refaire).
+flutter_launcher_icons:
+  image_path: assets/icon/app_icon.png
+  android: true
+  ios: true
+  remove_alpha_ios: true
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
