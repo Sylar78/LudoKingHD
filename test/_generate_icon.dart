@@ -102,13 +102,16 @@ class _IconPainter extends CustomPainter {
     );
 
     // Les quatre animaux, un par couleur, assis sur leur quart du plateau.
-    final cellSize = size.width * 0.30;
-    final offset = size.width * 0.215;
+    // Les oreilles et aigrettes montent haut au-dessus du point d'ancrage
+    // (baseY) : les rangées sont donc placées bas dans leur moitié, avec une
+    // figurine assez petite pour que rien ne sorte du cadre.
+    final cellSize = size.width * 0.20;
+    final dx = size.width * 0.235;
     final pawns = <(PlayerColor, Offset)>[
-      (PlayerColor.red, Offset(rect.center.dx - offset, rect.center.dy - offset * 0.55)),
-      (PlayerColor.blue, Offset(rect.center.dx + offset, rect.center.dy - offset * 0.55)),
-      (PlayerColor.green, Offset(rect.center.dx - offset, rect.center.dy + offset * 0.95)),
-      (PlayerColor.yellow, Offset(rect.center.dx + offset, rect.center.dy + offset * 0.95)),
+      (PlayerColor.red, Offset(rect.center.dx - dx, size.height * 0.365)),
+      (PlayerColor.blue, Offset(rect.center.dx + dx, size.height * 0.365)),
+      (PlayerColor.green, Offset(rect.center.dx - dx, size.height * 0.775)),
+      (PlayerColor.yellow, Offset(rect.center.dx + dx, size.height * 0.775)),
     ];
     for (final (color, center) in pawns) {
       paintAnimalPawn(
@@ -129,16 +132,22 @@ class _IconPainter extends CustomPainter {
 void main() {
   testWidgets('génère assets/icon/app_icon.png', (tester) async {
     await tester.pumpWidget(const RepaintBoundary(child: _AppIcon()));
-    await tester.pumpAndSettle();
+    await tester.pump();
 
     final element = find.byType(_AppIcon).evaluate().single;
     final boundary =
         element.findRenderObject()!.parent as RenderRepaintBoundary;
-    final image = await boundary.toImage(pixelRatio: 1.0);
-    final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
 
-    final file = File('assets/icon/app_icon.png');
-    await file.parent.create(recursive: true);
-    await file.writeAsBytes(bytes!.buffer.asUint8List());
+    // toImage()/toByteData() font un aller-retour natif réel : dans la zone
+    // FakeAsync de flutter_test, leur Future ne se résout jamais sans
+    // runAsync, qui bascule temporairement sur la vraie boucle d'événements.
+    await tester.runAsync(() async {
+      final image = await boundary.toImage(pixelRatio: 1.0);
+      final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+
+      final file = File('assets/icon/app_icon.png');
+      await file.parent.create(recursive: true);
+      await file.writeAsBytes(bytes!.buffer.asUint8List());
+    });
   });
 }
