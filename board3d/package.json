@@ -2,6 +2,9 @@
   "name": "ludo-board3d",
   "private": true,
   "description": "Scène Three.js du plateau, compilée en un seul fichier HTML embarqué par l'app Flutter.",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "build": "node build.mjs",
     "preview": "node build.mjs && npx --yes http-server ../assets/board3d -p 8080"

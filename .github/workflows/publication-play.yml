@@ -48,7 +48,7 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Sans ça, l'échec arriverait quinze minutes plus tard, au moment de
       # signer, avec un message de Gradle incompréhensible.
@@ -73,7 +73,7 @@ jobs:
 
       # Le plugin Android Gradle 8.1 exige un JDK 17 : le 11 échoue sur une erreur de
       # version de classe, loin de sa cause.
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
@@ -128,7 +128,7 @@ jobs:
       # Gardé quoi qu'il arrive : si le dépôt sur Play échoue, le bundle
       # reste téléchargeable et déposable à la main.
       - name: Conserver le bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ludokinghd-aab
           path: ${{ env.AAB_PATH }}

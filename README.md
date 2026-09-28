@@ -41,7 +41,8 @@ pour la marche à suivre complète sur Google Play et l'App Store.
 Sur Android et iOS, le plateau est une scène Three.js (bois verni, cases en
 céramique, figurines d'animaux, ombres portées) affichée dans une WebView.
 Ses sources sont dans `board3d/` ; l'app embarque le fichier compilé
-`assets/board3d/index.html`, qu'il faut regénérer après toute modification :
+`assets/board3d/index.html`, qu'il faut regénérer après toute modification
+(Node.js 24 ou plus récent) :
 
 ```
 cd board3d

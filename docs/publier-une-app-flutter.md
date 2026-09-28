@@ -276,7 +276,11 @@ sur un dépôt resté en `1.0.1+4` produit une app 1.0.1. Modifie cette ligne,
 pousse, **puis** pose l'étiquette.
 
 **Le numéro de build doit monter à chaque envoi.** Apple comme Google
-refusent un numéro déjà déposé.
+refusent un numéro déjà déposé (chez Apple : `ENTITY_ERROR.ATTRIBUTE.INVALID.DUPLICATE`).
+Côté TestFlight, le workflow s'en charge : il dépose le numéro du
+`pubspec.yaml` augmenté du numéro d'exécution du workflow, qui monte à chaque
+*Run workflow*. Le champ « Numéro de build » de *Run workflow* permet
+d'imposer une valeur précise si besoin.
 
 **« Re-run jobs » rejoue exactement le même commit.** C'est le piège qui fait
 croire qu'un correctif ne marche pas : le re-run ne va jamais chercher les
