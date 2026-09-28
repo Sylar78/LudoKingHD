@@ -29,7 +29,11 @@ try {
   send({ type: 'error', message: String(e) });
   throw e;
 }
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+// Beaucoup de téléphones sont à 3x : plafonner à 2 rendait la scène visiblement
+// moins nette sur ces écrans-là (les bords des tuiles et les figurines
+// paraissaient crénelés). Toujours plafonné pour ne pas payer 4x sur les rares
+// écrans au-delà.
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 3));
 renderer.setClearColor(0x000000, 0);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -41,13 +45,16 @@ document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
 const pmrem = new THREE.PMREMGenerator(renderer);
-scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-scene.environmentIntensity = 0.45;
+// Un sigma plus petit donne un environnement moins flouté : l'or et l'émail
+// captent des reflets nets plutôt qu'une lueur diffuse, ce qui se voit
+// beaucoup plus vue de dessus, là où l'œil regarde justement ces surfaces.
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.02).texture;
+scene.environmentIntensity = 0.85;
 
 // Lumière chaude en haut à gauche, qui porte les ombres ; un contre-jour
 // froid pour détacher les figurines du plateau.
 scene.add(new THREE.HemisphereLight(0xfff1e0, 0x2a1d4a, 0.35));
-const key = new THREE.DirectionalLight(0xfff0dc, 2.0);
+const key = new THREE.DirectionalLight(0xfff0dc, 2.4);
 key.position.set(-7, 15, 6);
 key.castShadow = true;
 key.shadow.mapSize.set(2048, 2048);
@@ -63,33 +70,29 @@ scene.add(rim);
 const { group: board } = buildBoard();
 scene.add(board);
 
-// ── Caméra : légèrement inclinée, recadrée pour que le coffret tienne ──────
-const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
+// ── Caméra : vue de dessus, orthographique ──────────────────────────────────
+// Un plateau se lit à plat, comme une photo prise au-dessus de la table :
+// l'orthographique retire toute convergence de perspective (ce qui, plus que
+// l'angle lui-même, est ce qui lit "3D" à l'œil). Un très léger tilt reste
+// nécessaire, sinon la caméra ne voit que le sommet des figurines — le musle
+// du renard, le bec du hibou, etc. sont sculptés pour être vus de face.
+const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
 const target = new THREE.Vector3(0, 0, 0.75);
-const viewDir = new THREE.Vector3(0, Math.cos(0.6), Math.sin(0.6)).normalize();
-const extents = [];
-for (const x of [-8.35, 8.35]) for (const z of [-8.35, 8.35]) for (const y of [-0.7, 0.4]) extents.push(new THREE.Vector3(x, y, z));
+const viewDir = new THREE.Vector3(0, Math.cos(0.16), Math.sin(0.16)).normalize();
+camera.up.set(0, 0, -1);
+const HALF_BOARD = 8.35 * 1.06; // légère marge tout autour du coffret
 
 function fitCamera() {
   const w = window.innerWidth || 1;
   const h = window.innerHeight || 1;
-  camera.aspect = w / h;
-  let lo = 5;
-  let hi = 120;
-  for (let i = 0; i < 30; i++) {
-    const d = (lo + hi) / 2;
-    camera.position.copy(target).addScaledVector(viewDir, d);
-    camera.lookAt(target);
-    camera.updateProjectionMatrix();
-    camera.updateMatrixWorld();
-    const fits = extents.every((p) => {
-      const v = p.clone().project(camera);
-      return Math.abs(v.x) <= 0.985 && Math.abs(v.y) <= 0.985;
-    });
-    if (fits) hi = d;
-    else lo = d;
-  }
-  camera.position.copy(target).addScaledVector(viewDir, hi);
+  const aspect = w / h;
+  const halfW = aspect >= 1 ? HALF_BOARD * aspect : HALF_BOARD;
+  const halfH = aspect >= 1 ? HALF_BOARD : HALF_BOARD / aspect;
+  camera.left = -halfW;
+  camera.right = halfW;
+  camera.top = halfH;
+  camera.bottom = -halfH;
+  camera.position.copy(target).addScaledVector(viewDir, 40);
   camera.lookAt(target);
   camera.updateProjectionMatrix();
   renderer.setSize(w, h, false);

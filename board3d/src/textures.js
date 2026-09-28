@@ -49,7 +49,10 @@ function canvasTexture(size, paint, { srgb = true, repeat = 1 } = {}) {
   const tex = new THREE.CanvasTexture(canvas);
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
   tex.repeat.set(repeat, repeat);
-  tex.anisotropy = 4;
+  // 4 laissait les cases et le plateau se brouiller en angle de vue rasant,
+  // le point le plus visible de la scène ; 8 passe sur la quasi-totalité des
+  // GPU mobiles actuels.
+  tex.anisotropy = 8;
   if (srgb) tex.colorSpace = THREE.SRGBColorSpace;
   return tex;
 }
@@ -58,7 +61,7 @@ const mix = (a, b, t) => a + (b - a) * t;
 
 /** Noyer verni : veines allongées, cernes, et une rugosité qui suit le fil. */
 export function woodTextures() {
-  const size = 512;
+  const size = 1024;
   const grain = new Float32Array(size * size);
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
@@ -97,7 +100,7 @@ export function woodTextures() {
 
 /** Toile de lin ivoire sous les cases : on la voit dans les joints. */
 export function linenTexture(repeat = 6) {
-  const size = 256;
+  const size = 512;
   return canvasTexture(
     size,
     (d) => {
@@ -124,7 +127,7 @@ export function linenTexture(repeat = 6) {
  * qui cassent le reflet, comme sur un carreau fait main.
  */
 export function glazeNormalMap() {
-  const size = 256;
+  const size = 512;
   const h = new Float32Array(size * size);
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
