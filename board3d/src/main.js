@@ -67,33 +67,29 @@ scene.add(rim);
 const { group: board } = buildBoard();
 scene.add(board);
 
-// ── Caméra : légèrement inclinée, recadrée pour que le coffret tienne ──────
-const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
+// ── Caméra : vue de dessus, orthographique ──────────────────────────────────
+// Un plateau se lit à plat, comme une photo prise au-dessus de la table :
+// l'orthographique retire toute convergence de perspective (ce qui, plus que
+// l'angle lui-même, est ce qui lit "3D" à l'œil). Un très léger tilt reste
+// nécessaire, sinon la caméra ne voit que le sommet des figurines — le musle
+// du renard, le bec du hibou, etc. sont sculptés pour être vus de face.
+const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
 const target = new THREE.Vector3(0, 0, 0.75);
-const viewDir = new THREE.Vector3(0, Math.cos(0.6), Math.sin(0.6)).normalize();
-const extents = [];
-for (const x of [-8.35, 8.35]) for (const z of [-8.35, 8.35]) for (const y of [-0.7, 0.4]) extents.push(new THREE.Vector3(x, y, z));
+const viewDir = new THREE.Vector3(0, Math.cos(0.16), Math.sin(0.16)).normalize();
+camera.up.set(0, 0, -1);
+const HALF_BOARD = 8.35 * 1.06; // légère marge tout autour du coffret
 
 function fitCamera() {
   const w = window.innerWidth || 1;
   const h = window.innerHeight || 1;
-  camera.aspect = w / h;
-  let lo = 5;
-  let hi = 120;
-  for (let i = 0; i < 30; i++) {
-    const d = (lo + hi) / 2;
-    camera.position.copy(target).addScaledVector(viewDir, d);
-    camera.lookAt(target);
-    camera.updateProjectionMatrix();
-    camera.updateMatrixWorld();
-    const fits = extents.every((p) => {
-      const v = p.clone().project(camera);
-      return Math.abs(v.x) <= 0.985 && Math.abs(v.y) <= 0.985;
-    });
-    if (fits) hi = d;
-    else lo = d;
-  }
-  camera.position.copy(target).addScaledVector(viewDir, hi);
+  const aspect = w / h;
+  const halfW = aspect >= 1 ? HALF_BOARD * aspect : HALF_BOARD;
+  const halfH = aspect >= 1 ? HALF_BOARD : HALF_BOARD / aspect;
+  camera.left = -halfW;
+  camera.right = halfW;
+  camera.top = halfH;
+  camera.bottom = -halfH;
+  camera.position.copy(target).addScaledVector(viewDir, 40);
   camera.lookAt(target);
   camera.updateProjectionMatrix();
   renderer.setSize(w, h, false);
