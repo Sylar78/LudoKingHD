@@ -19,7 +19,7 @@ on:
   workflow_dispatch:
     inputs:
       build_number:
-        description: Numéro de build (vide = celui de pubspec.yaml)
+        description: Numéro de build (vide = calculé automatiquement)
         type: string
         required: false
 
@@ -52,7 +52,7 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Vérifier que les secrets sont en place
         env:
@@ -138,7 +138,7 @@ jobs:
         run: flutter test
 
       - name: Importer le certificat de distribution
-        uses: apple-actions/import-codesign-certs@v3
+        uses: apple-actions/import-codesign-certs@v7
         with:
           p12-file-base64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
           p12-password: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
@@ -204,23 +204,40 @@ jobs:
           </plist>
           PLIST
 
+      # Apple refuse un numéro de build déjà déposé (ENTITY_ERROR.ATTRIBUTE.
+      # INVALID.DUPLICATE), et c'est arrivé en relançant sans toucher au
+      # pubspec.yaml. On ajoute donc le numéro d'exécution du workflow, qui
+      # monte à chaque « Run workflow », au numéro du pubspec.yaml : le
+      # résultat grimpe à chaque dépôt sans rien modifier à la main, et
+      # reste au-dessus de tout ce qui a été envoyé tant que le pubspec.yaml
+      # ne redescend pas.
+      - name: Choisir le numéro de build
+        id: build
+        env:
+          FORCE: ${{ inputs.build_number }}
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          base="$(sed -n 's/^version: *[^+]*+\([0-9]*\).*/\1/p' pubspec.yaml)"
+          if [ -n "$FORCE" ]; then
+            numero="$FORCE"
+          else
+            numero=$(( ${base:-0} + RUN_NUMBER ))
+          fi
+          echo "Numéro de build : $numero (pubspec.yaml : ${base:-aucun}, exécution n° $RUN_NUMBER)"
+          echo "number=$numero" >> "$GITHUB_OUTPUT"
+
       - name: Construire l'archive signée
         env:
-          BUILD_NUMBER: ${{ inputs.build_number }}
+          BUILD_NUMBER: ${{ steps.build.outputs.number }}
         run: |
-          if [ -n "$BUILD_NUMBER" ]; then
-            flutter build ipa --release \
-              --build-number="$BUILD_NUMBER" \
-              --export-options-plist=/tmp/ExportOptions.plist
-          else
-            flutter build ipa --release \
-              --export-options-plist=/tmp/ExportOptions.plist
-          fi
+          flutter build ipa --release \
+            --build-number="$BUILD_NUMBER" \
+            --export-options-plist=/tmp/ExportOptions.plist
 
       # Gardé quoi qu'il arrive : si le dépôt sur TestFlight échoue, l'archive
       # reste téléchargeable et déposable à la main avec Transporter.
       - name: Conserver l'archive
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ludokinghd-ipa
           path: ${{ env.IPA_DIR }}/*.ipa
@@ -243,8 +260,11 @@ jobs:
           echo "path=$chemin" >> "$GITHUB_OUTPUT"
 
       - name: Déposer sur TestFlight
-        uses: apple-actions/upload-testflight-build@v3
+        uses: apple-actions/upload-testflight-build@v5
         with:
+          # La v5 passe par défaut à l'API App Store Connect ; on garde altool,
+          # qui a déjà fait ses preuves sur ce dépôt.
+          backend: altool
           app-path: ${{ steps.archive.outputs.path }}
           issuer-id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           api-key-id: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
