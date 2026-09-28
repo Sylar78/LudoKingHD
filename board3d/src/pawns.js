@@ -42,7 +42,7 @@ const ink = () =>
 const beak = () => glazed(0xff9800);
 const gold = () =>
   mat('gold', () =>
-    new THREE.MeshStandardMaterial({ color: 0xd9a441, metalness: 1, roughness: 0.3 }),
+    new THREE.MeshStandardMaterial({ color: 0xd9a441, metalness: 1, roughness: 0.16 }),
   );
 
 function part(geo, material, [x, y, z], [sx, sy, sz] = [1, 1, 1]) {

@@ -45,13 +45,16 @@ document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
 const pmrem = new THREE.PMREMGenerator(renderer);
-scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-scene.environmentIntensity = 0.45;
+// Un sigma plus petit donne un environnement moins flouté : l'or et l'émail
+// captent des reflets nets plutôt qu'une lueur diffuse, ce qui se voit
+// beaucoup plus vue de dessus, là où l'œil regarde justement ces surfaces.
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.02).texture;
+scene.environmentIntensity = 0.85;
 
 // Lumière chaude en haut à gauche, qui porte les ombres ; un contre-jour
 // froid pour détacher les figurines du plateau.
 scene.add(new THREE.HemisphereLight(0xfff1e0, 0x2a1d4a, 0.35));
-const key = new THREE.DirectionalLight(0xfff0dc, 2.0);
+const key = new THREE.DirectionalLight(0xfff0dc, 2.4);
 key.position.set(-7, 15, 6);
 key.castShadow = true;
 key.shadow.mapSize.set(2048, 2048);

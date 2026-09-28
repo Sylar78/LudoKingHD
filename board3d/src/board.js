@@ -51,7 +51,7 @@ export function buildBoard() {
   const goldMat = new THREE.MeshStandardMaterial({
     color: 0xd9a441,
     metalness: 1,
-    roughness: 0.28,
+    roughness: 0.16,
   });
   const ivoryMat = new THREE.MeshPhysicalMaterial({
     color: 0xfbf6ea,
