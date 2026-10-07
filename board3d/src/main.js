@@ -10,6 +10,9 @@
 // l'état qu'on lui donne et animer le dernier coup.
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { SSAOPass } from 'three/examples/jsm/postprocessing/SSAOPass.js';
 import { BASE_TOP, TILE_TOP, buildBoard, cellToWorld, homeSpot } from './board.js';
 import { makeHighlightRing, makeShockwave, makeSparks } from './effects.js';
 import layout from './layout.json';
@@ -99,8 +102,22 @@ function fitCamera() {
   renderer.domElement.style.width = `${w}px`;
   renderer.domElement.style.height = `${h}px`;
   sparks.setPixelScale(h * renderer.getPixelRatio() / 600);
+  composer.setSize(w, h);
+  ssaoPass.setSize(w, h);
   dirty = true;
 }
+
+// ── Post-processing ─────────────────────────────────────────────────────────
+const composer = new EffectComposer(renderer);
+const renderPass = new RenderPass(scene, camera);
+composer.addPass(renderPass);
+
+const ssaoPass = new SSAOPass(scene, camera, window.innerWidth || 1, window.innerHeight || 1);
+ssaoPass.kernelRadius = 8;
+ssaoPass.minDistance = 0.001;
+ssaoPass.maxDistance = 0.1;
+ssaoPass.output = SSAOPass.OUTPUT.Default;
+composer.addPass(ssaoPass);
 
 // ── Effets ──────────────────────────────────────────────────────────────────
 const rings = [0, 1, 2, 3].map(() => {
@@ -364,7 +381,7 @@ function tick() {
   if (movable.length) dirty = true;
 
   if (dirty) {
-    renderer.render(scene, camera);
+    composer.render();
     dirty = false;
   }
 }
