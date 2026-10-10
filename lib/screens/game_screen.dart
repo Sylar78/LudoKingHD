@@ -11,8 +11,14 @@ import '../widgets/dice_widget.dart';
 import '../widgets/ludo_board_widget.dart';
 import '../widgets/player_info_panel.dart';
 
-class GameScreen extends StatelessWidget {
+class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
+
+  @override
+  State<GameScreen> createState() => _GameScreenState();
+}
+
+class _GameScreenState extends State<GameScreen> {
 
   @override
   Widget build(BuildContext context) {
@@ -76,9 +82,10 @@ class GameScreen extends StatelessWidget {
                           ],
                         ),
                         padding: const EdgeInsets.all(6),
-                        child: const ClipRRect(
-                          borderRadius: BorderRadius.all(Radius.circular(14)),
-                          child: LudoBoardWidget(),
+                        child: ClipRRect(
+                          borderRadius:
+                              const BorderRadius.all(Radius.circular(14)),
+                          child: const LudoBoardWidget(),
                         ),
                       ),
                     ),

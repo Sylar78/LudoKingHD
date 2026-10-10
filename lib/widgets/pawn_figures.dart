@@ -68,15 +68,28 @@ void paintAnimalPawn(
   final tresSombre = Color.lerp(teinte, Colors.black, 0.68)!;
 
   // ── L'ombre portée : ce qui pose la figurine sur la case ─────────────────
+  // Inner darker shadow
   canvas.drawOval(
     Rect.fromCenter(
-      center: Offset(cx + r * 0.16, baseY + r * 0.16),
-      width: r * 1.7,
-      height: r * 0.5,
+      center: Offset(cx + r * 0.16, baseY + r * 0.14),
+      width: r * 1.5,
+      height: r * 0.4,
     ),
     Paint()
-      ..color = Colors.black.withOpacity(0.40)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, r * 0.30),
+      ..color = Colors.black.withOpacity(0.55)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, r * 0.20),
+  );
+
+  // Outer soft shadow
+  canvas.drawOval(
+    Rect.fromCenter(
+      center: Offset(cx + r * 0.14, baseY + r * 0.18),
+      width: r * 2.0,
+      height: r * 0.6,
+    ),
+    Paint()
+      ..color = Colors.black.withOpacity(0.25)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, r * 0.45),
   );
 
   final corps = Rect.fromCenter(
@@ -124,32 +137,50 @@ void paintAnimalPawn(
   // ── La lumière : un liseré en haut à gauche, puis un reflet franc ────────
   canvas.save();
   canvas.clipPath(formeCorps);
+
+  // Larger soft glow
   canvas.drawOval(
     Rect.fromCenter(
       center: Offset(cx - r * 0.30, centerY - r * 0.62),
-      width: r * 1.10,
-      height: r * 0.72,
+      width: r * 1.20,
+      height: r * 0.82,
     ),
     Paint()
-      ..color = Colors.white.withOpacity(0.24)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, r * 0.22),
+      ..color = Colors.white.withOpacity(0.32)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, r * 0.28),
   );
+
+  // Bright shine spot
+  canvas.drawOval(
+    Rect.fromCenter(
+      center: Offset(cx - r * 0.40, centerY - r * 0.52),
+      width: r * 0.44,
+      height: r * 0.32,
+    ),
+    Paint()
+      ..color = Colors.white.withOpacity(0.60)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, r * 0.10),
+  );
+
   canvas.restore();
 
+  // Rim light
   canvas.drawPath(
     formeCorps,
     Paint()
-      ..color = Colors.white.withOpacity(0.38)
+      ..color = Colors.white.withOpacity(0.45)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = math.max(0.8, r * 0.07),
+      ..strokeWidth = math.max(0.9, r * 0.08),
   );
+
+  // Main highlight
   canvas.drawOval(
     Rect.fromCenter(
       center: Offset(cx - r * 0.40, centerY - r * 0.52),
       width: r * 0.34,
       height: r * 0.24,
     ),
-    Paint()..color = Colors.white.withOpacity(0.80),
+    Paint()..color = Colors.white.withOpacity(0.95),
   );
 
   // ── L'anneau des pions jouables ──────────────────────────────────────────
