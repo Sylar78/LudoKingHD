@@ -7,7 +7,6 @@ import '../models/player_color.dart';
 import '../providers/game_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_background.dart';
-import '../widgets/board3d/ludo_board_3d.dart';
 import '../widgets/dice_widget.dart';
 import '../widgets/ludo_board_widget.dart';
 import '../widgets/player_info_panel.dart';
@@ -20,9 +19,6 @@ class GameScreen extends StatefulWidget {
 }
 
 class _GameScreenState extends State<GameScreen> {
-  // Le 3D est le rendu par défaut là où il est disponible ; ce bouton laisse
-  // basculer sur le plateau 2D, plus léger, sans changer la logique du jeu.
-  bool _use3D = LudoBoard3D.isSupported;
 
   @override
   Widget build(BuildContext context) {
@@ -40,12 +36,6 @@ class _GameScreenState extends State<GameScreen> {
         title: Text('LUDO KING HD',
             style: AppText.display(size: 18, letterSpacing: 1.4)),
         actions: [
-          if (LudoBoard3D.isSupported)
-            IconButton(
-              icon: Icon(_use3D ? Icons.view_in_ar_rounded : Icons.grid_view_rounded),
-              tooltip: _use3D ? 'Passer au plateau 2D' : 'Passer au plateau 3D',
-              onPressed: () => setState(() => _use3D = !_use3D),
-            ),
           IconButton(
             icon: const Icon(Icons.replay_rounded),
             tooltip: 'Recommencer',
@@ -95,12 +85,7 @@ class _GameScreenState extends State<GameScreen> {
                         child: ClipRRect(
                           borderRadius:
                               const BorderRadius.all(Radius.circular(14)),
-                          // En 3D sur mobile par défaut ; le plateau 2D reste
-                          // la solution de repli (web, bureau, WebGL absent)
-                          // et peut aussi être choisi à la main.
-                          child: _use3D
-                              ? const LudoBoard3D()
-                              : const LudoBoardWidget(),
+                          child: const LudoBoardWidget(),
                         ),
                       ),
                     ),

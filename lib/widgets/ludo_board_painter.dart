@@ -98,8 +98,7 @@ class LudoBoardPainter extends CustomPainter {
       ..strokeWidth = 0.95
       ..style = PaintingStyle.stroke;
 
-    // Paint all outer-path cells with a white tile fill.
-    final whiteCellPaint = Paint()..color = Colors.white.withOpacity(0.92);
+    // Paint all outer-path cells with gradient fill for depth.
     for (final cell in BoardLayout.outerPath) {
       final rect = Rect.fromLTWH(
         cell.$2 * cellSize + 0.5,
@@ -107,7 +106,27 @@ class LudoBoardPainter extends CustomPainter {
         cellSize - 1,
         cellSize - 1,
       );
-      canvas.drawRect(rect, whiteCellPaint);
+
+      // Gradient for depth perception
+      final cellGradient = Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white.withOpacity(0.95),
+            Colors.white.withOpacity(0.88),
+          ],
+        ).createShader(rect);
+      canvas.drawRect(rect, cellGradient);
+
+      // Subtle shadow on bottom-right
+      canvas.drawRect(
+        rect,
+        Paint()
+          ..color = Colors.black.withOpacity(0.04)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.8,
+      );
     }
 
     final laneHighlight = Paint()
@@ -157,23 +176,48 @@ class LudoBoardPainter extends CustomPainter {
       final r = entry.value;
       final c = colors[entry.key]!;
 
-      // Outer player zone: flat saturated color (reference style).
+      // Outer player zone with gradient for depth.
       final bgRect = Rect.fromLTWH(
         r.left * cellSize,
         r.top * cellSize,
         r.width * cellSize,
         r.height * cellSize,
       );
-      final bgPaint = Paint()..color = c;
+      final gradientPaint = Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            c.withOpacity(1.0),
+            Color.lerp(c, Colors.black, 0.15)!,
+          ],
+        ).createShader(bgRect);
       canvas.drawRRect(
         RRect.fromRectAndRadius(bgRect, const Radius.circular(8)),
-        bgPaint,
+        gradientPaint,
+      );
+
+      // Shadow effect
+      final shadowPaint = Paint()
+        ..color = Colors.black.withOpacity(0.20)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(
+            r.left * cellSize + 2,
+            r.top * cellSize + r.height * cellSize - 4,
+            r.width * cellSize - 4,
+            3,
+          ),
+          const Radius.circular(1),
+        ),
+        shadowPaint,
       );
 
       // Outer border of the player zone.
       final borderPaint = Paint()
-        ..color = Color.lerp(c, Colors.black, 0.18)!
-        ..strokeWidth = 1.8
+        ..color = Color.lerp(c, Colors.black, 0.28)!
+        ..strokeWidth = 2
         ..style = PaintingStyle.stroke;
       final rr = RRect.fromRectAndRadius(
         Rect.fromLTWH(
@@ -186,24 +230,46 @@ class LudoBoardPainter extends CustomPainter {
       );
       canvas.drawRRect(rr, borderPaint);
 
-      // Inner white square with player-color contour (as in reference).
+      // Inner white square with player-color contour.
       final innerRect = Rect.fromLTWH(
         (r.left + 1) * cellSize,
         (r.top + 1) * cellSize,
         4 * cellSize,
         4 * cellSize,
       );
-      canvas.drawRect(innerRect, Paint()..color = Colors.white);
+
+      // Inner gradient for depth
+      final innerGradient = Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white.withOpacity(0.95),
+            Colors.white.withOpacity(0.88),
+          ],
+        ).createShader(innerRect);
+      canvas.drawRect(innerRect, innerGradient);
+
+      // Inner shadow
       canvas.drawRect(
         innerRect,
         Paint()
-          ..color = Color.lerp(c, Colors.black, 0.16)!
+          ..color = Colors.black.withOpacity(0.08)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.6,
+          ..strokeWidth = 1.2,
       );
 
-      // Optional subtle tint to keep volume while preserving white-square look.
-      final innerCirclePaint = Paint()..color = c.withOpacity(0.10);
+      // Color contour
+      canvas.drawRect(
+        innerRect,
+        Paint()
+          ..color = Color.lerp(c, Colors.black, 0.24)!
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.8,
+      );
+
+      // Radial light effect for volume
+      final innerCirclePaint = Paint()..color = c.withOpacity(0.12);
       final centerX = (r.left + r.width / 2) * cellSize;
       final centerY = (r.top + r.height / 2) * cellSize;
       canvas.drawCircle(
@@ -224,18 +290,30 @@ class LudoBoardPainter extends CustomPainter {
 
     for (final entry in BoardLayout.homeColumns.entries) {
       final color = colors[entry.key]!;
-      final paint = Paint()..color = color.withOpacity(0.92);
       for (int i = 0; i < entry.value.length - 1; i++) {
         final cell = entry.value[i];
         final rect = Rect.fromLTWH(cell.$2 * cellSize + 1,
             cell.$1 * cellSize + 1, cellSize - 2, cellSize - 2);
-        canvas.drawRect(rect, paint);
+
+        // Gradient for depth
+        final gradientPaint = Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              color.withOpacity(0.95),
+              Color.lerp(color, Colors.black, 0.08)!.withOpacity(0.90),
+            ],
+          ).createShader(rect);
+        canvas.drawRect(rect, gradientPaint);
+
+        // Highlight
         canvas.drawRect(
           rect,
           Paint()
-            ..color = Colors.white.withOpacity(0.24)
+            ..color = Colors.white.withOpacity(0.32)
             ..style = PaintingStyle.stroke
-            ..strokeWidth = 0.7,
+            ..strokeWidth = 1,
         );
       }
     }
@@ -316,7 +394,7 @@ class LudoBoardPainter extends CustomPainter {
     final cy = size.height / 2;
     final r = cellSize * 1.5;
 
-    // Draw a coloured triangle for each quadrant
+    // Draw a coloured triangle for each quadrant with gradient
     final colours = [
       (
         const Color(0xFF1E88E5),
@@ -342,10 +420,34 @@ class LudoBoardPainter extends CustomPainter {
         ..lineTo(tri.$2[1].dx, tri.$2[1].dy)
         ..lineTo(tri.$2[2].dx, tri.$2[2].dy)
         ..close();
-      canvas.drawPath(path, Paint()..color = tri.$1);
+
+      final rect = Rect.fromLTWH(cx - r, cy - r, r * 2, r * 2);
+      final gradientPaint = Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.center,
+          end: Alignment.bottomRight,
+          colors: [
+            tri.$1.withOpacity(1.0),
+            Color.lerp(tri.$1, Colors.black, 0.12)!,
+          ],
+        ).createShader(rect);
+      canvas.drawPath(path, gradientPaint);
+
+      // Add border highlight
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = Colors.white.withOpacity(0.15)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.8,
+      );
     }
 
-    // No white circle – coloured triangles form the home design
+    // Central shine effect
+    final centerGlow = Paint()
+      ..color = Colors.white.withOpacity(0.08)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+    canvas.drawCircle(Offset(cx, cy), cellSize * 0.8, centerGlow);
   }
 
   void _drawSafeZoneStars(Canvas canvas, double cellSize) {
@@ -368,32 +470,72 @@ class LudoBoardPainter extends CustomPainter {
       if (startColor != null) {
         final cellRect =
             Rect.fromLTWH(left + 0.5, top + 0.5, cellSize - 1, cellSize - 1);
-        canvas.drawRect(
-            cellRect, Paint()..color = startColor.withOpacity(0.92));
+
+        // Gradient for start cells
+        final gradientPaint = Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              startColor.withOpacity(0.95),
+              Color.lerp(startColor, Colors.black, 0.10)!.withOpacity(0.90),
+            ],
+          ).createShader(cellRect);
+        canvas.drawRect(cellRect, gradientPaint);
+
+        // Highlight
         canvas.drawRect(
           cellRect,
           Paint()
-            ..color = Colors.white.withOpacity(0.26)
+            ..color = Colors.white.withOpacity(0.28)
             ..style = PaintingStyle.stroke
-            ..strokeWidth = 0.7,
+            ..strokeWidth = 1,
         );
         continue;
       }
 
-      // Gold background
-      canvas.drawRect(
-        Rect.fromLTWH(left + 0.5, top + 0.5, cellSize - 1, cellSize - 1),
-        Paint()..color = const Color(0xFFFFF8DC),
-      );
+      // Gold background with gradient
+      final goldRect = Rect.fromLTWH(left + 0.5, top + 0.5, cellSize - 1, cellSize - 1);
+      final goldGradient = Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFFFFF8DC),
+            const Color(0xFFFFE082),
+          ],
+        ).createShader(goldRect);
+      canvas.drawRect(goldRect, goldGradient);
 
       // 5-pointed star
       final star = _buildStarPath(cx, cy, cellSize * 0.38, cellSize * 0.16);
+
+      // Star shadow
+      canvas.drawPath(
+        star,
+        Paint()
+          ..color = Colors.black.withOpacity(0.15)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
+      );
+
+      // Star fill
       canvas.drawPath(star, Paint()..color = const Color(0xFFFFC107));
+
+      // Star highlight
+      canvas.drawPath(
+        star,
+        Paint()
+          ..color = Colors.white.withOpacity(0.40)
+          ..strokeWidth = 1
+          ..style = PaintingStyle.stroke,
+      );
+
+      // Star border
       canvas.drawPath(
         star,
         Paint()
           ..color = const Color(0xFFFF8F00)
-          ..strokeWidth = 0.7
+          ..strokeWidth = 0.9
           ..style = PaintingStyle.stroke,
       );
     }
